@@ -20,6 +20,7 @@ compile_error!(
     "You must specify a math backend. Consider enabling either `std`, `libm`, or `nostd_libm`."
 );
 
+mod features;
 mod gvec2;
 
 pub use gvec2::{GVec2, gvec2};

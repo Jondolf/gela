@@ -21,6 +21,9 @@ bytecheck = ["rkyv/bytecheck"]
 
 zerocopy = ["dep:zerocopy", "dep:zerocopy-derive"]
 
+# Enables conversion to and from mint interoperability types
+mint = ["dep:mint"]
+
 # Enables libm and prefers it over std
 libm = ["dep:libm"]
 
