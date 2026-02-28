@@ -3,4 +3,58 @@ name = "gglam"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["std"]
+
+# Enables support for the standard library
+std = []
+
+# Aligns types to match CUDA requirements
+cuda = []
+
+serde = ["dep:serde_core"]
+
+# Experimental nightly portable_simd support
+portable_simd = ["bytemuck?/nightly_portable_simd"]
+
+bytecheck = ["rkyv/bytecheck"]
+
+zerocopy = ["dep:zerocopy", "dep:zerocopy-derive"]
+
+# Enables libm and prefers it over std
+libm = ["dep:libm"]
+
+# Enables libm but will prefer std if available
+nostd_libm = ["dep:libm"]
+
 [dependencies]
+gnum = { path = "../gnum", features = ["portable_simd"] }
+
+# Optional dependencies for features
+approx = { version = "0.5", optional = true, default-features = false }
+bytemuck = { version = "1.9", optional = true, default-features = false, features = [
+    "derive",
+    "aarch64_simd",
+    "wasm_simd",
+] }
+mint = { version = "0.5.8", optional = true, default-features = false }
+rand = { version = "0.10", optional = true, default-features = false }
+serde_core = { version = "1.0", optional = true, default-features = false }
+rkyv = { version = "0.8", optional = true, default-features = false }
+libm = { version = "0.2", optional = true, default-features = false }
+speedy = { version = "0.8", optional = true, default-features = false }
+encase = { version = "0.12", optional = true, default-features = false }
+zerocopy = { version = "0.8", optional = true, default-features = false, features = [
+    "simd",
+] }
+zerocopy-derive = { version = "0.8", optional = true, default-features = false }
+arbitrary = { version = "1.4.2", default-features = false, optional = true }
+
+[dev-dependencies]
+# For now, we use portable_simd here, will be removed later
+gglam = { path = ".", features = ["std", "portable_simd"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(target_arch, values("spirv"))',
+] }
