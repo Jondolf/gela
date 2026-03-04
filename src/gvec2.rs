@@ -6,12 +6,13 @@ use core::{
 };
 
 use gnum::{
-    simd::{NumEq, NumOrd, Select, SimdBool},
-    traits::{
+    cmp::{NumEq, NumOrd},
+    num::{
         CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, DivEuclid, Float, Int, Num, Real,
         RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, Signed, WrappingAdd,
         WrappingDiv, WrappingMul, WrappingSub,
     },
+    simd::{MaskLike, Select},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -90,7 +91,7 @@ impl<T: Float> GVec2<T> {
 }
 
 /// # Boolean Constants
-impl<T: SimdBool> GVec2<T> {
+impl<T: MaskLike> GVec2<T> {
     /// All `true`.
     pub const TRUE: Self = Self::new(T::TRUE, T::TRUE);
 
@@ -1089,7 +1090,7 @@ impl<T: Copy + SaturatingDiv<Output = T>> GVec2<T> {
 }
 
 /// # Boolean Operations
-impl<T: SimdBool> GVec2<T> {
+impl<T: MaskLike> GVec2<T> {
     /// Returns `true` if all elements of `self` are true, and `false` otherwise.
     #[inline]
     #[must_use]
@@ -1260,6 +1261,21 @@ impl<T: Copy + Mul<Output = T>> Mul<&GVec2<T>> for &GVec2<T> {
     }
 }
 
+impl<T: Copy + MulAssign> MulAssign for GVec2<T> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: GVec2<T>) {
+        self.x *= rhs.x;
+        self.y *= rhs.y;
+    }
+}
+
+impl<T: Copy + MulAssign> MulAssign<&GVec2<T>> for GVec2<T> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: &GVec2<T>) {
+        self.mul_assign(*rhs);
+    }
+}
+
 impl<T: Copy + Mul<Output = T>> Mul<T> for GVec2<T> {
     type Output = GVec2<T>;
     #[inline]
@@ -1335,21 +1351,6 @@ macro_rules! impl_scalar_left_mul {
 impl_scalar_left_mul!(i8, i16, i32, i64, i128, isize);
 impl_scalar_left_mul!(u8, u16, u32, u64, u128, usize);
 impl_scalar_left_mul!(f32, f64);
-
-impl<T: Copy + MulAssign> MulAssign for GVec2<T> {
-    #[inline]
-    fn mul_assign(&mut self, rhs: GVec2<T>) {
-        self.x *= rhs.x;
-        self.y *= rhs.y;
-    }
-}
-
-impl<T: Copy + MulAssign> MulAssign<&GVec2<T>> for GVec2<T> {
-    #[inline]
-    fn mul_assign(&mut self, rhs: &GVec2<T>) {
-        self.mul_assign(*rhs);
-    }
-}
 
 impl<T: Copy + MulAssign> MulAssign<T> for GVec2<T> {
     #[inline]

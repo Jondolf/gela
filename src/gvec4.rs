@@ -6,12 +6,13 @@ use core::{
 };
 
 use gnum::{
-    simd::{NumEq, NumOrd, Select, SimdBool},
-    traits::{
+    cmp::{NumEq, NumOrd},
+    num::{
         CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, DivEuclid, Float, Int, Num, Real,
         RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, Signed, WrappingAdd,
         WrappingDiv, WrappingMul, WrappingSub,
     },
+    simd::{MaskLike, Select},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -106,7 +107,7 @@ impl<T: Float> GVec4<T> {
 }
 
 /// # Boolean Constants
-impl<T: SimdBool> GVec4<T> {
+impl<T: MaskLike> GVec4<T> {
     /// All `true`.
     pub const TRUE: Self = Self::new(T::TRUE, T::TRUE, T::TRUE, T::TRUE);
 
@@ -1212,7 +1213,7 @@ impl<T: Copy + SaturatingDiv<Output = T>> GVec4<T> {
 }
 
 /// # Boolean Operations
-impl<T: SimdBool> GVec4<T> {
+impl<T: MaskLike> GVec4<T> {
     /// Returns `true` if all elements of `self` are true, and `false` otherwise.
     #[inline]
     #[must_use]
@@ -1406,6 +1407,23 @@ impl<T: Copy + Mul<Output = T>> Mul<&GVec4<T>> for &GVec4<T> {
     }
 }
 
+impl<T: Copy + MulAssign> MulAssign for GVec4<T> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: GVec4<T>) {
+        self.x *= rhs.x;
+        self.y *= rhs.y;
+        self.z *= rhs.z;
+        self.w *= rhs.w;
+    }
+}
+
+impl<T: Copy + MulAssign> MulAssign<&GVec4<T>> for GVec4<T> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: &GVec4<T>) {
+        self.mul_assign(*rhs);
+    }
+}
+
 impl<T: Copy + Mul<Output = T>> Mul<T> for GVec4<T> {
     type Output = GVec4<T>;
     #[inline]
@@ -1481,23 +1499,6 @@ macro_rules! impl_scalar_left_mul {
 impl_scalar_left_mul!(i8, i16, i32, i64, i128, isize);
 impl_scalar_left_mul!(u8, u16, u32, u64, u128, usize);
 impl_scalar_left_mul!(f32, f64);
-
-impl<T: Copy + MulAssign> MulAssign for GVec4<T> {
-    #[inline]
-    fn mul_assign(&mut self, rhs: GVec4<T>) {
-        self.x *= rhs.x;
-        self.y *= rhs.y;
-        self.z *= rhs.z;
-        self.w *= rhs.w;
-    }
-}
-
-impl<T: Copy + MulAssign> MulAssign<&GVec4<T>> for GVec4<T> {
-    #[inline]
-    fn mul_assign(&mut self, rhs: &GVec4<T>) {
-        self.mul_assign(*rhs);
-    }
-}
 
 impl<T: Copy + MulAssign> MulAssign<T> for GVec4<T> {
     #[inline]

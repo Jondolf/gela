@@ -1,4 +1,4 @@
-use crate::{GVec2, GVec4, Vec4Swizzles};
+use crate::{GQuat, GVec2, GVec4, Vec4Swizzles};
 
 use core::{
     iter::{Product, Sum},
@@ -6,12 +6,13 @@ use core::{
 };
 
 use gnum::{
-    simd::{NumEq, NumOrd, Select, SimdBool},
-    traits::{
+    cmp::{NumEq, NumOrd},
+    num::{
         CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, DivEuclid, Float, Int, Num, Real,
         RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, ScalarFloat, Signed,
         WrappingAdd, WrappingDiv, WrappingMul, WrappingSub,
     },
+    simd::{MaskLike, Select},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -97,7 +98,7 @@ impl<T: Float> GVec3<T> {
 }
 
 /// # Boolean Constants
-impl<T: SimdBool> GVec3<T> {
+impl<T: MaskLike> GVec3<T> {
     /// All `true`.
     pub const TRUE: Self = Self::new(T::TRUE, T::TRUE, T::TRUE);
 
@@ -866,7 +867,7 @@ impl<T: Real> GVec3<T> {
     #[inline]
     #[must_use]
     pub fn rotate_axis(self, axis: Self, angle: T) -> Self {
-        todo!("GQuat::from_axis_angle(axis, angle) * self")
+        GQuat::from_axis_angle(axis, angle) * self
     }
 }
 
@@ -977,7 +978,7 @@ impl<T: Float> GVec3<T> {
         let axis = self
             .cross(rhs)
             .normalize_or(self.any_orthogonal_vector().normalize());
-        todo!("GQuat::from_axis_angle(axis, angle) * self")
+        GQuat::from_axis_angle(axis, angle) * self
     }
 
     /// Returns some vector that is orthogonal to the given one.
@@ -1083,12 +1084,10 @@ impl<T: ScalarFloat> GVec3<T> {
 
             // Create a rotation from self to rhs along some axis
             let axis = self.any_orthogonal_vector().normalize();
-            todo!("let rotation = GQuat::from_axis_angle(axis, T::PI * s);");
+            let rotation = GQuat::from_axis_angle(axis, T::PI * s);
             // Interpolate vector lengths
-            /*
             let result_length = self_length + (rhs_length - self_length) * s;
             rotation * self * (result_length / self_length)
-            */
         } else {
             // Vectors are almost parallel in the same direction, or dot was NaN
             self.lerp(rhs, s)
@@ -1307,7 +1306,7 @@ impl<T: Copy + SaturatingDiv<Output = T>> GVec3<T> {
 }
 
 /// # Boolean Operations
-impl<T: SimdBool> GVec3<T> {
+impl<T: MaskLike> GVec3<T> {
     /// Returns `true` if all elements of `self` are true, and `false` otherwise.
     #[inline]
     #[must_use]
@@ -1482,6 +1481,22 @@ impl<T: Copy + Mul<Output = T>> Mul<&GVec3<T>> for &GVec3<T> {
     }
 }
 
+impl<T: Copy + MulAssign> MulAssign for GVec3<T> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: GVec3<T>) {
+        self.x *= rhs.x;
+        self.y *= rhs.y;
+        self.z *= rhs.z;
+    }
+}
+
+impl<T: Copy + MulAssign> MulAssign<&GVec3<T>> for GVec3<T> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: &GVec3<T>) {
+        self.mul_assign(*rhs);
+    }
+}
+
 impl<T: Copy + Mul<Output = T>> Mul<T> for GVec3<T> {
     type Output = GVec3<T>;
     #[inline]
@@ -1557,22 +1572,6 @@ macro_rules! impl_scalar_left_mul {
 impl_scalar_left_mul!(i8, i16, i32, i64, i128, isize);
 impl_scalar_left_mul!(u8, u16, u32, u64, u128, usize);
 impl_scalar_left_mul!(f32, f64);
-
-impl<T: Copy + MulAssign> MulAssign for GVec3<T> {
-    #[inline]
-    fn mul_assign(&mut self, rhs: GVec3<T>) {
-        self.x *= rhs.x;
-        self.y *= rhs.y;
-        self.z *= rhs.z;
-    }
-}
-
-impl<T: Copy + MulAssign> MulAssign<&GVec3<T>> for GVec3<T> {
-    #[inline]
-    fn mul_assign(&mut self, rhs: &GVec3<T>) {
-        self.mul_assign(*rhs);
-    }
-}
 
 impl<T: Copy + MulAssign> MulAssign<T> for GVec3<T> {
     #[inline]
