@@ -111,7 +111,7 @@ impl<T: Real> GMat2<T> {
         Self::new(diagonal.x, T::ZERO, T::ZERO, diagonal.y)
     }
 
-    /// Creates a vector from the elements in `if_true` and `if_false`, selecting which to use
+    /// Creates a matrix from the elements in `if_true` and `if_false`, selecting which to use
     /// based on the given `boolean`.
     ///
     /// A true boolean uses the corresponding element from `if_true`, and false

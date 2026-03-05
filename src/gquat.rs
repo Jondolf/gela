@@ -78,7 +78,7 @@ impl<T: Real> GQuat<T> {
         Self { x, y, z, w }
     }
 
-    /// Creates a vector from the elements in `if_true` and `if_false`, selecting which to use
+    /// Creates a quaternion from the elements in `if_true` and `if_false`, selecting which to use
     /// based on the given `boolean`.
     ///
     /// A true boolean uses the corresponding element from `if_true`, and false

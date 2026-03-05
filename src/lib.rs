@@ -20,8 +20,11 @@ compile_error!(
     "You must specify a math backend. Consider enabling either `std`, `libm`, or `nostd_libm`."
 );
 
+mod deref;
 mod euler;
 mod features;
+mod gaffine2;
+mod gaffine3;
 mod gmat2;
 mod gmat3;
 mod gmat4;
@@ -33,6 +36,8 @@ mod swizzles;
 
 pub use euler::EulerRot;
 pub(crate) use euler::{FromEuler, ToEuler};
+pub use gaffine2::GAffine2;
+pub use gaffine3::GAffine3;
 pub use gmat2::{GMat2, gmat2};
 pub use gmat3::{GMat3, gmat3};
 pub use gmat4::{GMat4, gmat4};
