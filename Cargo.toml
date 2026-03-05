@@ -2,6 +2,13 @@
 name = "gglam"
 version = "0.1.0"
 edition = "2024"
+authors = ["Joona Aalto <jondolf.dev@gmail.com>"]
+description = "Glam math library with generic types and wide SIMD support"
+repository = "https://github.com/Jondolf/gglam"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["gamedev", "math", "matrix", "vector", "quaternion"]
+categories = ["game-engines"]
 
 [features]
 default = ["std"]
