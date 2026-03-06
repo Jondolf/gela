@@ -2,6 +2,8 @@
 
 A generic version of the [`glam`] math library for games and graphics.
 
+[`glam`]: https://github.com/bitshifter/glam-rs
+
 ## Features
 
 - Generic number traits using `gnum`
@@ -9,7 +11,10 @@ A generic version of the [`glam`] math library for games and graphics.
 - Square matrices: `GMat2`, `GMat3`, `GMat4` (real numbers)
 - Quaternions: `GQuat` (real numbers)
 - Affine transformations: `GAffine2`, `GAffine3` (real numbers)
-- AoSoA-style wide SIMD using `wide` on stable Rust or `core::simd` on nightly Rust
+- [AoSoA]-style wide [SIMD] using `wide` on stable Rust or `core::simd` on nightly Rust
+
+[AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+[SIMD]: https://en.wikipedia.org/wiki/Single_instruction,_multiple_data
 
 ## Why?
 
@@ -37,6 +42,9 @@ While `gglam` can be used fully standalone, it is not intended as a replacement 
 The concrete APIs and SIMD-aligned types of `glam` can still be valuable even alongside `gglam`.
 The main purpose of `gglam` is to give users the ability to drop down to the generic APIs
 or wide SIMD support when needed, even if `glam` is used elsewhere.
+
+[`ultraviolet`]: https://github.com/fu5ha/ultraviolet
+[`nalgebra`]: https://nalgebra.rs/
 
 ## License
 
