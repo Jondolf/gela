@@ -1,4 +1,4 @@
-use crate::{EulerRot, GMat3, GMat4, GVec2, GVec3, GVec4, ToEuler};
+use crate::{EulerRot, FromEuler, GAffine3, GMat3, GMat4, GVec2, GVec3, GVec4, ToEuler};
 
 use core::{
     iter::{Product, Sum},
@@ -199,15 +199,6 @@ impl<T: Real> GQuat<T> {
         Self::from_xyzw(T::ZERO, T::ZERO, s, c)
     }
 
-    /*
-    /// Creates a quaternion from the given Euler rotation sequence and the angles (in radians).
-    #[inline]
-    #[must_use]
-    pub fn from_euler(euler: EulerRot, a: T, b: T, c: T) -> Self {
-        Self::from_euler_angles(euler, a, b, c)
-    }
-    */
-
     /// From the columns of a 3x3 rotation matrix.
     ///
     /// Note if the input axes contain scales, shears, or other non-rotation transformations then
@@ -355,6 +346,15 @@ impl<T: Real> GQuat<T> {
             mat.y_axis.truncate(),
             mat.z_axis.truncate(),
         )
+    }
+}
+
+impl<T: ScalarReal> GQuat<T> {
+    /// Creates a quaternion from the given Euler rotation sequence and the angles (in radians).
+    #[inline]
+    #[must_use]
+    pub fn from_euler(euler: EulerRot, a: T, b: T, c: T) -> Self {
+        Self::from_euler_angles(euler, a, b, c)
     }
 }
 
@@ -792,31 +792,15 @@ impl<T: Real> GQuat<T> {
         )
     }
 
-    /*
     /// Creates a quaternion from a 3x3 rotation matrix inside a 3D affine transform.
     ///
     /// Note if the input affine matrix contain scales, shears, or other non-rotation
     /// transformations then the resulting quaternion will be ill-defined.
     #[inline]
     #[must_use]
-    pub fn from_affine3(a: &Affine3) -> Self {
+    pub fn from_affine3(a: &GAffine3<T>) -> Self {
         Self::from_rotation_axes(a.matrix3.x_axis, a.matrix3.y_axis, a.matrix3.z_axis)
     }
-
-    /// Creates a quaternion from a 3x3 rotation matrix inside a 3D affine transform.
-    ///
-    /// Note if the input affine matrix contain scales, shears, or other non-rotation
-    /// transformations then the resulting quaternion will be ill-defined.
-    #[inline]
-    #[must_use]
-    pub fn from_affine3a(a: &Affine3A) -> Self {
-        Self::from_rotation_axes(
-            a.matrix3.x_axis.into(),
-            a.matrix3.y_axis.into(),
-            a.matrix3.z_axis.into(),
-        )
-    }
-    */
 }
 
 /// # Float Methods
