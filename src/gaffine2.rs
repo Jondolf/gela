@@ -313,6 +313,75 @@ impl<T: Float> GAffine2<T> {
     }
 }
 
+/// # SIMD Operations
+impl<T: Real> GAffine2<T>
+where
+    T::Element: Real,
+{
+    /// Broadcasts a scalar affine into a SIMD affine, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GAffine2<T::Element>) -> Self {
+        Self {
+            matrix2: GMat2::broadcast(value.matrix2),
+            translation: GVec2::broadcast(value.translation),
+        }
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GAffine2<T::Element> {
+        GAffine2 {
+            matrix2: self.matrix2.extract(i),
+            translation: self.translation.extract(i),
+        }
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GAffine2<T::Element> {
+        unsafe {
+            GAffine2 {
+                matrix2: self.matrix2.extract_unchecked(i),
+                translation: self.translation.extract_unchecked(i),
+            }
+        }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GAffine2<T::Element>) {
+        self.matrix2.replace(i, value.matrix2);
+        self.translation.replace(i, value.translation);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GAffine2<T::Element>) {
+        unsafe {
+            self.matrix2.replace_unchecked(i, value.matrix2);
+            self.translation.replace_unchecked(i, value.translation);
+        }
+    }
+}
+
 impl<T: Real> Default for GAffine2<T> {
     #[inline]
     fn default() -> Self {

@@ -417,6 +417,72 @@ impl<T: Float> GMat2<T> {
     }
 }
 
+/// # SIMD Operations
+impl<T: Real> GMat2<T>
+where
+    T::Element: Real,
+{
+    /// Broadcasts a scalar matrix into a SIMD matrix, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GMat2<T::Element>) -> Self {
+        Self::from_cols(
+            GVec2::broadcast(value.x_axis),
+            GVec2::broadcast(value.y_axis),
+        )
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GMat2<T::Element> {
+        GMat2::from_cols(self.x_axis.extract(i), self.y_axis.extract(i))
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GMat2<T::Element> {
+        unsafe {
+            GMat2::from_cols(
+                self.x_axis.extract_unchecked(i),
+                self.y_axis.extract_unchecked(i),
+            )
+        }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GMat2<T::Element>) {
+        self.x_axis.replace(i, value.x_axis);
+        self.y_axis.replace(i, value.y_axis);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GMat2<T::Element>) {
+        unsafe {
+            self.x_axis.replace_unchecked(i, value.x_axis);
+            self.y_axis.replace_unchecked(i, value.y_axis);
+        }
+    }
+}
+
 impl<T: Real> Default for GMat2<T> {
     #[inline]
     fn default() -> Self {

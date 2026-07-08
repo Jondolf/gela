@@ -1231,6 +1231,85 @@ impl<T: Float> GMat4<T> {
     }
 }
 
+/// # SIMD Operations
+impl<T: Real> GMat4<T>
+where
+    T::Element: Real,
+{
+    /// Broadcasts a scalar matrix into a SIMD matrix, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GMat4<T::Element>) -> Self {
+        Self::from_cols(
+            GVec4::broadcast(value.x_axis),
+            GVec4::broadcast(value.y_axis),
+            GVec4::broadcast(value.z_axis),
+            GVec4::broadcast(value.w_axis),
+        )
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GMat4<T::Element> {
+        GMat4::from_cols(
+            self.x_axis.extract(i),
+            self.y_axis.extract(i),
+            self.z_axis.extract(i),
+            self.w_axis.extract(i),
+        )
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GMat4<T::Element> {
+        unsafe {
+            GMat4::from_cols(
+                self.x_axis.extract_unchecked(i),
+                self.y_axis.extract_unchecked(i),
+                self.z_axis.extract_unchecked(i),
+                self.w_axis.extract_unchecked(i),
+            )
+        }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GMat4<T::Element>) {
+        self.x_axis.replace(i, value.x_axis);
+        self.y_axis.replace(i, value.y_axis);
+        self.z_axis.replace(i, value.z_axis);
+        self.w_axis.replace(i, value.w_axis);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GMat4<T::Element>) {
+        unsafe {
+            self.x_axis.replace_unchecked(i, value.x_axis);
+            self.y_axis.replace_unchecked(i, value.y_axis);
+            self.z_axis.replace_unchecked(i, value.z_axis);
+            self.w_axis.replace_unchecked(i, value.w_axis);
+        }
+    }
+}
+
 impl<T: Real> Default for GMat4<T> {
     #[inline]
     fn default() -> Self {

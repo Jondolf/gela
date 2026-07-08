@@ -12,7 +12,7 @@ use gnum::{
         RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, Signed, WrappingAdd,
         WrappingDiv, WrappingMul, WrappingSub,
     },
-    simd::{MaskLike, Select},
+    simd::{MaskLike, Select, SimdLike},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -1258,6 +1258,85 @@ impl<T: MaskLike> GVec4<T> {
             2 => self.z = value,
             3 => self.w = value,
             _ => panic!("index out of bounds"),
+        }
+    }
+}
+
+/// # SIMD Operations
+impl<T: SimdLike + Copy> GVec4<T>
+where
+    T::Element: Copy,
+{
+    /// Broadcasts a scalar vector into a SIMD vector, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GVec4<T::Element>) -> Self {
+        Self::new(
+            T::splat(value.x),
+            T::splat(value.y),
+            T::splat(value.z),
+            T::splat(value.w),
+        )
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GVec4<T::Element> {
+        GVec4::new(
+            self.x.extract(i),
+            self.y.extract(i),
+            self.z.extract(i),
+            self.w.extract(i),
+        )
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GVec4<T::Element> {
+        unsafe {
+            GVec4::new(
+                self.x.extract_unchecked(i),
+                self.y.extract_unchecked(i),
+                self.z.extract_unchecked(i),
+                self.w.extract_unchecked(i),
+            )
+        }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GVec4<T::Element>) {
+        self.x.replace(i, value.x);
+        self.y.replace(i, value.y);
+        self.z.replace(i, value.z);
+        self.w.replace(i, value.w);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GVec4<T::Element>) {
+        unsafe {
+            self.x.replace_unchecked(i, value.x);
+            self.y.replace_unchecked(i, value.y);
+            self.z.replace_unchecked(i, value.z);
+            self.w.replace_unchecked(i, value.w);
         }
     }
 }

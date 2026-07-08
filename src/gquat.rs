@@ -821,6 +821,85 @@ impl<T: Float> GQuat<T> {
     }
 }
 
+/// # SIMD Operations
+impl<T: Real> GQuat<T>
+where
+    T::Element: Real,
+{
+    /// Broadcasts a scalar quaternion into a SIMD quaternion, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GQuat<T::Element>) -> Self {
+        Self::from_xyzw(
+            T::splat(value.x),
+            T::splat(value.y),
+            T::splat(value.z),
+            T::splat(value.w),
+        )
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GQuat<T::Element> {
+        GQuat::from_xyzw(
+            self.x.extract(i),
+            self.y.extract(i),
+            self.z.extract(i),
+            self.w.extract(i),
+        )
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GQuat<T::Element> {
+        unsafe {
+            GQuat::from_xyzw(
+                self.x.extract_unchecked(i),
+                self.y.extract_unchecked(i),
+                self.z.extract_unchecked(i),
+                self.w.extract_unchecked(i),
+            )
+        }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GQuat<T::Element>) {
+        self.x.replace(i, value.x);
+        self.y.replace(i, value.y);
+        self.z.replace(i, value.z);
+        self.w.replace(i, value.w);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GQuat<T::Element>) {
+        unsafe {
+            self.x.replace_unchecked(i, value.x);
+            self.y.replace_unchecked(i, value.y);
+            self.z.replace_unchecked(i, value.z);
+            self.w.replace_unchecked(i, value.w);
+        }
+    }
+}
+
 impl<T: Real> Default for GQuat<T> {
     #[inline]
     fn default() -> Self {

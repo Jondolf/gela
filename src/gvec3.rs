@@ -12,7 +12,7 @@ use gnum::{
         RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, ScalarFloat, Signed,
         WrappingAdd, WrappingDiv, WrappingMul, WrappingSub,
     },
-    simd::{MaskLike, Select},
+    simd::{MaskLike, Select, SimdLike},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -1349,6 +1349,72 @@ impl<T: MaskLike> GVec3<T> {
             1 => self.y = value,
             2 => self.z = value,
             _ => panic!("index out of bounds"),
+        }
+    }
+}
+
+/// # SIMD Operations
+impl<T: SimdLike + Copy> GVec3<T>
+where
+    T::Element: Copy,
+{
+    /// Broadcasts a scalar vector into a SIMD vector, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GVec3<T::Element>) -> Self {
+        Self::new(T::splat(value.x), T::splat(value.y), T::splat(value.z))
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GVec3<T::Element> {
+        GVec3::new(self.x.extract(i), self.y.extract(i), self.z.extract(i))
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GVec3<T::Element> {
+        unsafe {
+            GVec3::new(
+                self.x.extract_unchecked(i),
+                self.y.extract_unchecked(i),
+                self.z.extract_unchecked(i),
+            )
+        }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GVec3<T::Element>) {
+        self.x.replace(i, value.x);
+        self.y.replace(i, value.y);
+        self.z.replace(i, value.z);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GVec3<T::Element>) {
+        unsafe {
+            self.x.replace_unchecked(i, value.x);
+            self.y.replace_unchecked(i, value.y);
+            self.z.replace_unchecked(i, value.z);
         }
     }
 }

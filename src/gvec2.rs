@@ -12,7 +12,7 @@ use gnum::{
         RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, Signed, WrappingAdd,
         WrappingDiv, WrappingMul, WrappingSub,
     },
-    simd::{MaskLike, Select},
+    simd::{MaskLike, Select, SimdLike},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -1131,6 +1131,64 @@ impl<T: MaskLike> GVec2<T> {
             0 => self.x = value,
             1 => self.y = value,
             _ => panic!("index out of bounds"),
+        }
+    }
+}
+
+/// # SIMD Operations
+impl<T: SimdLike + Copy> GVec2<T>
+where
+    T::Element: Copy,
+{
+    /// Broadcasts a scalar vector into a SIMD vector, filling all lanes with the same value.
+    #[inline]
+    pub fn broadcast(value: GVec2<T::Element>) -> Self {
+        Self::new(T::splat(value.x), T::splat(value.y))
+    }
+
+    /// Extracts the i-th lane of `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub fn extract(&self, i: usize) -> GVec2<T::Element> {
+        GVec2::new(self.x.extract(i), self.y.extract(i))
+    }
+
+    /// Extracts the i-th lane of `self` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    #[must_use]
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GVec2<T::Element> {
+        unsafe { GVec2::new(self.x.extract_unchecked(i), self.y.extract_unchecked(i)) }
+    }
+
+    /// Replaces the i-th lane of `self` with `value`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= T::LANES`.
+    #[inline]
+    pub fn replace(&mut self, i: usize, value: GVec2<T::Element>) {
+        self.x.replace(i, value.x);
+        self.y.replace(i, value.y);
+    }
+
+    /// Replaces the i-th lane of `self` with `value` without bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if `i >= T::LANES`.
+    #[inline]
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GVec2<T::Element>) {
+        unsafe {
+            self.x.replace_unchecked(i, value.x);
+            self.y.replace_unchecked(i, value.y);
         }
     }
 }
