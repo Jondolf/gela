@@ -94,7 +94,7 @@ impl<T: Real> GQuat<T> {
         }
     }
 
-    /// Creates a rotation quaternion from an array.
+    /// Creates a new rotation quaternion from an array.
     ///
     /// # Preconditions
     ///
@@ -201,7 +201,7 @@ impl<T: Real> GQuat<T> {
 
     /// From the columns of a 3x3 rotation matrix.
     ///
-    /// Note if the input axes contain scales, shears, or other non-rotation transformations then
+    /// Note if the input axes contain scales, shears, or other non-rotation transformations,
     /// the output of this function is ill-defined.
     #[inline]
     #[must_use]
@@ -326,7 +326,7 @@ impl<T: Real> GQuat<T> {
 
     /// Creates a quaternion from a 3x3 rotation matrix.
     ///
-    /// Note if the input matrix contain scales, shears, or other non-rotation transformations then
+    /// Note if the input matrix contain scales, shears, or other non-rotation transformations,
     /// the resulting quaternion will be ill-defined.
     #[inline]
     #[must_use]
@@ -336,8 +336,8 @@ impl<T: Real> GQuat<T> {
 
     /// Creates a quaternion from the upper 3x3 rotation matrix inside a homogeneous 4x4 matrix.
     ///
-    /// Note if the upper 3x3 matrix contain scales, shears, or other non-rotation transformations
-    /// then the resulting quaternion will be ill-defined.
+    /// Note if the upper 3x3 matrix contain scales, shears, or other non-rotation transformations,
+    /// the resulting quaternion will be ill-defined.
     #[inline]
     #[must_use]
     pub fn from_mat4(mat: &GMat4<T>) -> Self {
@@ -578,9 +578,9 @@ impl<T: Real> GQuat<T> {
 
     /// Returns the inverse of a normalized quaternion.
     ///
-    /// Typically quaternion inverse returns the conjugate of a normalized quaternion.
-    /// Because `self` is assumed to already be unit length this method *does not* normalize
-    /// before returning the conjugate.
+    /// Typically, the inverse returns the conjugate of a normalized quaternion.
+    /// Because `self` is assumed to already be unit length, this method *does not*
+    /// normalize before returning the conjugate.
     #[inline]
     #[must_use]
     pub fn inverse(self) -> Self {
@@ -632,7 +632,7 @@ impl<T: Real> GQuat<T> {
         Self::from_vec4(GVec4::from(self).normalize())
     }
 
-    /// Returns whether `self` of length `1.0` or not.
+    /// Returns whether `self` is of length `1.0` or not.
     #[inline]
     #[must_use]
     pub fn is_normalized(self, eps: T) -> T::Bool {
@@ -713,8 +713,8 @@ impl<T: Real> GQuat<T> {
     /// Performs a linear interpolation between `self` and `rhs` based on
     /// the value `s`.
     ///
-    /// When `s` is `0.0`, the result will be equal to `self`.  When `s`
-    /// is `1.0`, the result will be equal to `rhs`.
+    /// When `s` is `0.0`, the result will be equal to `self`.
+    /// When `s` is `1.0`, the result will be equal to `rhs`.
     #[doc(alias = "mix")]
     #[inline]
     #[must_use]
@@ -727,8 +727,8 @@ impl<T: Real> GQuat<T> {
     /// Performs a spherical linear interpolation between `self` and `end`
     /// based on the value `s`.
     ///
-    /// When `s` is `0.0`, the result will be equal to `self`.  When `s`
-    /// is `1.0`, the result will be equal to `end`.
+    /// When `s` is `0.0`, the result will be equal to `self`.
+    /// When `s` is `1.0`, the result will be equal to `end`.
     #[inline]
     #[must_use]
     pub fn slerp(self, mut end: Self, s: T) -> Self {
@@ -778,7 +778,8 @@ impl<T: Real> GQuat<T> {
     /// Multiplies two quaternions. If they each represent a rotation, the result will
     /// represent the combined rotation.
     ///
-    /// Note that due to floating point rounding the result may not be perfectly normalized.
+    /// Note that due to floating point rounding, the result may not be perfectly normalized.
+    /// Consider normalizing the result after several successive multiplications.
     #[inline]
     #[must_use]
     pub fn mul_quat(self, rhs: Self) -> Self {
@@ -794,8 +795,8 @@ impl<T: Real> GQuat<T> {
 
     /// Creates a quaternion from a 3x3 rotation matrix inside a 3D affine transform.
     ///
-    /// Note if the input affine matrix contain scales, shears, or other non-rotation
-    /// transformations then the resulting quaternion will be ill-defined.
+    /// Note if the input affine matrix contain scales, shears, or other non-rotation transformations,
+    /// the resulting quaternion will be ill-defined.
     #[inline]
     #[must_use]
     pub fn from_affine3(a: &GAffine3<T>) -> Self {
@@ -964,6 +965,9 @@ impl<T: Real + Sub<Output = T>> Sub for GQuat<T> {
     /// Subtracts the `rhs` quaternion from `self`.
     ///
     /// The difference is not guaranteed to be normalized.
+    ///
+    /// Note that subtraction is not the same as combining the rotations represented by the
+    /// two quaternions! That corresponds to multiplication by the inverse.
     #[inline]
     fn sub(self, rhs: GQuat<T>) -> Self {
         GQuat::from_vec4(GVec4::from(self) - GVec4::from(rhs))
@@ -1013,8 +1017,8 @@ impl<T: Real + Mul<Output = T>> Mul for GQuat<T> {
     /// Multiplies two quaternions. If they each represent a rotation, the result will
     /// represent the combined rotation.
     ///
-    /// Note that due to floating point rounding the result may not be perfectly
-    /// normalized.
+    /// Note that due to floating point rounding, the result may not be perfectly normalized.
+    /// Consider normalizing the result after several successive multiplications.
     #[inline]
     fn mul(self, rhs: GQuat<T>) -> Self {
         self.mul_quat(rhs)
