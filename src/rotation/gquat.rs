@@ -1,4 +1,7 @@
-use crate::{EulerRot, FromEuler, GAffine3, GMat3, GMat4, GVec2, GVec3, GVec4, ToEuler};
+use crate::affine::GAffine3;
+use crate::matrix::{GMat3, GMat4};
+use crate::rotation::{EulerRot, FromEuler, ToEuler};
+use crate::vector::{GVec2, GVec3, GVec4};
 
 use core::{
     iter::{Product, Sum},
@@ -15,8 +18,10 @@ use zerocopy_derive::*;
 
 /// Creates a quaternion.
 ///
-/// This should generally not be called manually unless you know what you are doing. Use
-/// one of the other constructors instead such as `from_axis_angle`.
+/// This should generally not be called manually unless you know what you are doing.
+/// Use one of the other constructors instead such as [`from_axis_angle`].
+///
+/// [`from_axis_angle`]: GQuat::from_axis_angle
 #[inline(always)]
 #[must_use]
 pub const fn gquat<T: Real>(x: T, y: T, z: T, w: T) -> GQuat<T> {
@@ -639,6 +644,7 @@ impl<T: Real> GQuat<T> {
         GVec4::from(self).is_normalized(eps)
     }
 
+    /// Returns whether `self` is near the identity quaternion.
     #[inline]
     #[must_use]
     pub fn is_near_identity(self) -> T::Bool {

@@ -1,4 +1,6 @@
-use crate::{EulerRot, FromEuler, GMat3, GQuat, GVec3, GVec4, ToEuler, Vec4Swizzles};
+use crate::matrix::GMat3;
+use crate::rotation::{EulerRot, FromEuler, GQuat, ToEuler};
+use crate::vector::{GVec3, GVec4, Vec4Swizzles};
 
 use core::{
     iter::{Product, Sum},
@@ -29,7 +31,7 @@ pub const fn gmat4<T: Real>(
 ///
 /// This 4x4 matrix type features convenience methods for creating and using affine transforms and
 /// perspective projections. If you are primarily dealing with 3D affine transformations
-/// considering using [`Affine3A`](crate::Affine3A) which is faster than a 4x4 matrix
+/// considering using [`GAffine3`](crate::affine::GAffine3) which is faster than a 4x4 matrix
 /// for some affine operations.
 ///
 /// Affine transformations including 3D translation, rotation and scale can be created

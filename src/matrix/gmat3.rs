@@ -1,6 +1,6 @@
-use crate::{
-    EulerRot, FromEuler, GMat2, GMat4, GQuat, GVec2, GVec3, ToEuler, Vec3Swizzles, Vec4Swizzles,
-};
+use crate::matrix::{GMat2, GMat4};
+use crate::rotation::{EulerRot, FromEuler, GQuat, ToEuler};
+use crate::vector::{GVec2, GVec3, Vec3Swizzles, Vec4Swizzles};
 
 use core::{
     iter::{Product, Sum},
@@ -26,7 +26,7 @@ pub const fn gmat3<T: Real>(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>
 ///
 /// This 3x3 matrix type features convenience methods for creating and using linear and
 /// affine transformations. If you are primarily dealing with 2D affine transformations the
-/// [`Affine2`](crate::Affine2) type is much faster and more space efficient than
+/// [`GAffine2`](crate::affine::GAffine2) type is much faster and more space efficient than
 /// using a 3x3 matrix.
 ///
 /// Linear transformations including 3D rotation and scale can be created using methods

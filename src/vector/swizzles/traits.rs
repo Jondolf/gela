@@ -1,3 +1,5 @@
+#![expect(missing_docs)]
+
 /// Swizzles for 2-dimensional vectors.
 pub trait Vec2Swizzles: Copy {
     type Vec3;

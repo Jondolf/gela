@@ -1,4 +1,4 @@
-use crate::{GVec2, GVec3, GVec4, swizzles::traits::Vec2Swizzles};
+use crate::vector::{GVec2, GVec3, GVec4, Vec2Swizzles};
 
 impl<T: Copy> Vec2Swizzles for GVec2<T> {
     type Vec3 = GVec3<T>;

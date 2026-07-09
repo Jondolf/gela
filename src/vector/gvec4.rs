@@ -1,4 +1,4 @@
-use crate::{GVec2, GVec3};
+use crate::vector::{GVec2, GVec3};
 
 use core::{
     iter::{Product, Sum},
@@ -211,7 +211,7 @@ impl<T: Copy> GVec4<T> {
 
     /// Creates a 3D vector from the `x`, `y`, and `z` elements of `self`, discarding `w`.
     ///
-    /// Truncation may also be performed by using [`self.xyz()`](crate::swizzles::Vec3Swizzles::xyz()).
+    /// Truncation may also be performed by using [`self.xyz()`](crate::vector::Vec3Swizzles::xyz()).
     #[inline]
     #[must_use]
     pub const fn truncate(self) -> GVec3<T> {

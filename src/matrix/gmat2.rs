@@ -1,4 +1,5 @@
-use crate::{GMat3, GVec2, Vec3Swizzles};
+use crate::matrix::GMat3;
+use crate::vector::{GVec2, Vec3Swizzles};
 
 use core::{
     iter::{Product, Sum},

@@ -1,4 +1,5 @@
-use crate::{GMat2, GMat3, GVec2, Vec3Swizzles};
+use crate::matrix::{GMat2, GMat3};
+use crate::vector::{GVec2, Vec3Swizzles};
 
 use core::{iter::Product, ops::*};
 
@@ -10,7 +11,7 @@ use gnum::{
 #[cfg(feature = "zerocopy")]
 use zerocopy_derive::*;
 
-/// A 2D affine transform, which can represent translation, rotation, scaling and shear.
+/// A 2D affine transform, which can represent translation, rotation, scaling and shearing.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bytemuck", derive(bytemuck::AnyBitPattern))]
 #[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]

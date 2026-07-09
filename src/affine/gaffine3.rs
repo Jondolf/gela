@@ -1,4 +1,6 @@
-use crate::{GMat3, GMat4, GQuat, GVec3, Vec4Swizzles};
+use crate::matrix::{GMat3, GMat4};
+use crate::rotation::GQuat;
+use crate::vector::{GVec3, Vec4Swizzles};
 
 use core::{iter::Product, ops::*};
 
@@ -10,7 +12,7 @@ use gnum::{
 #[cfg(feature = "zerocopy")]
 use zerocopy_derive::*;
 
-/// A 3D affine transform, which can represent translation, rotation, scaling and shear.
+/// A 3D affine transform, which can represent translation, rotation, scaling and shearing.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
 #[cfg_attr(

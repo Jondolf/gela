@@ -1,4 +1,6 @@
-use crate::{GAffine2, GMat2, GVec2};
+use crate::affine::GAffine2;
+use crate::matrix::GMat2;
+use crate::vector::GVec2;
 
 use core::{
     iter::{Product, Sum},
@@ -14,6 +16,12 @@ use gnum::{
 use zerocopy_derive::*;
 
 /// Creates a 2D rotation from the cosine and sine of the angle (in radians).
+///
+/// This should generally not be called manually unless you know what you are doing.
+/// Use one of the other constructors instead such as [`from_radians`] or [`from_degrees`].
+///
+/// [`from_radians`]: GRot2::from_radians
+/// [`from_degrees`]: GRot2::from_degrees
 #[inline(always)]
 #[must_use]
 pub const fn grot2<T: Real>(cos: T, sin: T) -> GRot2<T> {
@@ -285,6 +293,7 @@ impl<T: Real> GRot2<T> {
         GVec2::from(self).is_normalized(eps)
     }
 
+    /// Returns whether `self` is near the identity rotation.
     #[inline]
     #[must_use]
     pub fn is_near_identity(self) -> T::Bool {
