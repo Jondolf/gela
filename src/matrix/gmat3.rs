@@ -1,5 +1,5 @@
 use crate::matrix::{GMat2, GMat4};
-use crate::rotation::{EulerRot, FromEuler, GQuat, ToEuler};
+use crate::rotation::{EulerRot, FromEuler, GRot3, ToEuler};
 use crate::vector::{GVec2, GVec3, Vec3Swizzles, Vec4Swizzles};
 
 use core::{
@@ -30,7 +30,7 @@ pub const fn gmat3<T: Real>(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>
 /// using a 3x3 matrix.
 ///
 /// Linear transformations including 3D rotation and scale can be created using methods
-/// such as [`Self::from_diagonal()`], [`Self::from_quat()`], [`Self::from_axis_angle()`],
+/// such as [`Self::from_diagonal()`], [`Self::from_rot3()`], [`Self::from_axis_angle()`],
 /// [`Self::from_rotation_x()`], [`Self::from_rotation_y()`], or
 /// [`Self::from_rotation_z()`].
 ///
@@ -225,7 +225,7 @@ impl<T: Real> GMat3<T> {
     /// Creates a 3D rotation matrix from the given quaternion.
     #[inline]
     #[must_use]
-    pub fn from_quat(rotation: GQuat<T>) -> Self {
+    pub fn from_rot3(rotation: GRot3<T>) -> Self {
         let x2 = rotation.x + rotation.x;
         let y2 = rotation.y + rotation.y;
         let z2 = rotation.z + rotation.z;

@@ -5,7 +5,7 @@ use gnum::num::ScalarReal;
 
 use crate::{
     matrix::{GMat3, GMat4},
-    rotation::GQuat,
+    rotation::GRot3,
     vector::{GVec3, Vec3Swizzles},
 };
 
@@ -269,7 +269,7 @@ impl<T: ScalarReal> FromEuler for GMat4<T> {
     }
 }
 
-impl<T: ScalarReal> FromEuler for GQuat<T> {
+impl<T: ScalarReal> FromEuler for GRot3<T> {
     type Scalar = T;
     fn from_euler_angles(euler: EulerRot, x: T, y: T, z: T) -> Self {
         let order = Order::from_euler(euler);
@@ -316,7 +316,7 @@ impl<T: ScalarReal> FromEuler for GQuat<T> {
             a[3] = cj * cc + sj * ss;
         }
 
-        GQuat::from_array(a)
+        GRot3::from_array(a)
     }
 }
 
@@ -369,9 +369,9 @@ impl<T: ScalarReal> ToEuler for GMat4<T> {
     }
 }
 
-impl<T: ScalarReal> ToEuler for GQuat<T> {
+impl<T: ScalarReal> ToEuler for GRot3<T> {
     type Scalar = T;
     fn to_euler_angles(self, order: EulerRot) -> (T, T, T) {
-        GMat3::from_quat(self).to_euler_angles(order)
+        GMat3::from_rot3(self).to_euler_angles(order)
     }
 }

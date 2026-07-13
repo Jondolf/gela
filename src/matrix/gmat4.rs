@@ -1,5 +1,5 @@
 use crate::matrix::GMat3;
-use crate::rotation::{EulerRot, FromEuler, GQuat, ToEuler};
+use crate::rotation::{EulerRot, FromEuler, GRot3, ToEuler};
 use crate::vector::{GVec3, GVec4, Vec4Swizzles};
 
 use core::{
@@ -35,7 +35,7 @@ pub const fn gmat4<T: Real>(
 /// for some affine operations.
 ///
 /// Affine transformations including 3D translation, rotation and scale can be created
-/// using methods such as [`Self::from_translation()`], [`Self::from_quat()`],
+/// using methods such as [`Self::from_translation()`], [`Self::from_rot3()`],
 /// [`Self::from_scale()`] and [`Self::from_scale_rotation_translation()`].
 ///
 /// Orthographic projections can be created using the methods [`Self::orthographic_lh()`] for
@@ -244,7 +244,7 @@ impl<T: Real> GMat4<T> {
 
     #[inline]
     #[must_use]
-    fn quat_to_axes(rotation: GQuat<T>) -> (GVec4<T>, GVec4<T>, GVec4<T>) {
+    fn quat_to_axes(rotation: GRot3<T>) -> (GVec4<T>, GVec4<T>, GVec4<T>) {
         let (x, y, z, w) = rotation.into();
         let x2 = x + x;
         let y2 = y + y;
@@ -265,16 +265,15 @@ impl<T: Real> GMat4<T> {
         (x_axis, y_axis, z_axis)
     }
 
-    /// Creates an affine transformation matrix from the given 3D `scale`, `rotation` and
-    /// `translation`.
+    /// Creates an affine transformation matrix from the given 3D `scale`, `rotation`, and `translation`.
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_scale_rotation_translation(
         scale: GVec3<T>,
-        rotation: GQuat<T>,
+        rotation: GRot3<T>,
         translation: GVec3<T>,
     ) -> Self {
         let (x_axis, y_axis, z_axis) = Self::quat_to_axes(rotation);
@@ -288,11 +287,11 @@ impl<T: Real> GMat4<T> {
 
     /// Creates an affine transformation matrix from the given 3D `translation`.
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
-    pub fn from_rotation_translation(rotation: GQuat<T>, translation: GVec3<T>) -> Self {
+    pub fn from_rotation_translation(rotation: GRot3<T>, translation: GVec3<T>) -> Self {
         let (x_axis, y_axis, z_axis) = Self::quat_to_axes(rotation);
         Self::from_cols(x_axis, y_axis, z_axis, GVec4::from((translation, T::ONE)))
     }
@@ -301,7 +300,7 @@ impl<T: Real> GMat4<T> {
     /// expected to be a 3D affine transformation matrix otherwise the output will be invalid.
     #[inline]
     #[must_use]
-    pub fn to_scale_rotation_translation(&self) -> (GVec3<T>, GQuat<T>, GVec3<T>) {
+    pub fn to_scale_rotation_translation(&self) -> (GVec3<T>, GRot3<T>, GVec3<T>) {
         let det = self.determinant();
 
         let scale = GVec3::new(
@@ -312,7 +311,7 @@ impl<T: Real> GMat4<T> {
 
         let inv_scale = scale.recip();
 
-        let rotation = GQuat::from_rotation_axes(
+        let rotation = GRot3::from_rotation_axes(
             self.x_axis.mul(inv_scale.x).xyz(),
             self.y_axis.mul(inv_scale.y).xyz(),
             self.z_axis.mul(inv_scale.z).xyz(),
@@ -325,11 +324,11 @@ impl<T: Real> GMat4<T> {
 
     /// Creates an affine transformation matrix from the given `rotation` quaternion.
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
-    pub fn from_quat(rotation: GQuat<T>) -> Self {
+    pub fn from_rot3(rotation: GRot3<T>) -> Self {
         let (x_axis, y_axis, z_axis) = Self::quat_to_axes(rotation);
         Self::from_cols(x_axis, y_axis, z_axis, GVec4::W)
     }
@@ -337,8 +336,8 @@ impl<T: Real> GMat4<T> {
     /// Creates an affine transformation matrix from the given 3x3 linear transformation
     /// matrix.
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_mat3(m: GMat3<T>) -> Self {
@@ -367,8 +366,8 @@ impl<T: Real> GMat4<T> {
 
     /// Creates an affine transformation matrix from the given 3D `translation`.
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_translation(translation: GVec3<T>) -> Self {
@@ -383,8 +382,8 @@ impl<T: Real> GMat4<T> {
     /// Creates an affine transformation matrix containing a 3D rotation around a normalized
     /// rotation `axis` of `angle` (in radians).
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_axis_angle(axis: GVec3<T>, angle: T) -> Self {
@@ -429,8 +428,8 @@ impl<T: ScalarReal> GMat4<T> {
 
     /// Extract Euler angles with the given Euler rotation order.
     ///
-    /// Note if the input matrix contains scales, shears, or other non-rotation transformations then
-    /// the resulting Euler angles will be ill-defined.
+    /// Note that if the input matrix contains scales, shears, or other non-rotation
+    /// transformations, the output of this function is ill-defined.
     #[inline]
     #[must_use]
     pub fn to_euler(&self, order: EulerRot) -> (T, T, T) {
@@ -442,8 +441,8 @@ impl<T: Real> GMat4<T> {
     /// Creates an affine transformation matrix containing a 3D rotation around the x axis of
     /// `angle` (in radians).
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_rotation_x(angle: T) -> Self {
@@ -459,8 +458,8 @@ impl<T: Real> GMat4<T> {
     /// Creates an affine transformation matrix containing a 3D rotation around the y axis of
     /// `angle` (in radians).
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_rotation_y(angle: T) -> Self {
@@ -476,8 +475,8 @@ impl<T: Real> GMat4<T> {
     /// Creates an affine transformation matrix containing a 3D rotation around the z axis of
     /// `angle` (in radians).
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_rotation_z(angle: T) -> Self {
@@ -492,8 +491,8 @@ impl<T: Real> GMat4<T> {
 
     /// Creates an affine transformation matrix containing the given 3D non-uniform `scale`.
     ///
-    /// The resulting matrix can be used to transform 3D points and vectors. See
-    /// [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
     #[inline]
     #[must_use]
     pub fn from_scale(scale: GVec3<T>) -> Self {
@@ -739,20 +738,18 @@ impl<T: Real> GMat4<T> {
         self.inverse_checked::<true>().0
     }
 
-    /// Creates a left-handed view matrix using a camera position, a facing direction, and an up
-    /// direction.
+    /// Creates a left-handed view matrix from a camera position, a facing direction, and an up direction.
     ///
-    /// For a view coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
+    /// This is for a left-handed coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
     #[inline]
     #[must_use]
     pub fn look_to_lh(eye: GVec3<T>, dir: GVec3<T>, up: GVec3<T>) -> Self {
         Self::look_to_rh(eye, -dir, up)
     }
 
-    /// Creates a right-handed view matrix using a camera position, a facing direction, and an up
-    /// direction.
+    /// Creates a right-handed view matrix from a camera position, a facing direction, and an up direction.
     ///
-    /// For a view coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
+    /// This is for a right-handed coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
     #[inline]
     #[must_use]
     pub fn look_to_rh(eye: GVec3<T>, dir: GVec3<T>, up: GVec3<T>) -> Self {
@@ -768,20 +765,18 @@ impl<T: Real> GMat4<T> {
         )
     }
 
-    /// Creates a left-handed view matrix using a camera position, a focal point, and an up
-    /// direction.
+    /// Creates a left-handed view matrix using a camera position, a focal point, and an up direction.
     ///
-    /// For a view coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
+    /// This is for a left-handed coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
     #[inline]
     #[must_use]
     pub fn look_at_lh(eye: GVec3<T>, center: GVec3<T>, up: GVec3<T>) -> Self {
         Self::look_to_lh(eye, center.sub(eye).normalize(), up)
     }
 
-    /// Creates a right-handed view matrix using a camera position, a focal point, and an up
-    /// direction.
+    /// Creates a right-handed view matrix using a camera position, a focal point, and an up direction.
     ///
-    /// For a view coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
+    /// This is for a right-handed coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
     #[inline]
     pub fn look_at_rh(eye: GVec3<T>, center: GVec3<T>, up: GVec3<T>) -> Self {
         Self::look_to_rh(eye, center.sub(eye).normalize(), up)

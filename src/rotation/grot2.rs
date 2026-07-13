@@ -29,6 +29,11 @@ pub const fn grot2<T: Real>(cos: T, sin: T) -> GRot2<T> {
 }
 
 /// A 2D rotation represented as a unit complex number.
+///
+/// The complex number is intended to be of unit length to represent a valid rotation,
+/// but it may become denormalized through error accumulation over successive operations.
+/// Users are responsible for normalizing the complex number when necessary, using methods
+/// such as [`normalize`](Self::normalize) or [`normalize_fast`](Self::normalize_fast).
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
 #[cfg_attr(
@@ -38,6 +43,7 @@ pub const fn grot2<T: Real>(cos: T, sin: T) -> GRot2<T> {
 #[cfg_attr(feature = "cuda", repr(align(8)))]
 #[repr(C)]
 #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
+#[doc(alias = "GComplex")]
 pub struct GRot2<T: Real> {
     /// The cosine of the rotation angle (in radians).
     ///
@@ -78,9 +84,10 @@ impl<T: Real> GRot2<T> {
     /// Creates a new 2D rotation.
     ///
     /// This should generally not be called manually unless you know what you are doing.
-    /// Use one of the other constructors instead such as `from_radians`.
+    /// Use one of the other constructors instead such as [`from_radians`] or [`from_degrees`].
     ///
-    /// `from_cos_sin` is mostly used by unit tests and `serde` deserialization.
+    /// [`from_radians`]: GRot2::from_radians
+    /// [`from_degrees`]: GRot2::from_degrees
     ///
     /// # Preconditions
     ///
@@ -146,7 +153,7 @@ impl<T: Real> GRot2<T> {
         Self::from_cos_sin(slice[0], slice[1])
     }
 
-    /// Writes the rotation to an unaligned slice.
+    /// Writes the 2D rotation to an unaligned slice in the form `[cos, sin]`.
     ///
     /// # Panics
     ///
@@ -197,15 +204,15 @@ impl<T: Real> GRot2<T> {
         self.to_radians().to_degrees()
     }
 
-    /// `[cos, sin]`
+    /// Returns the complex number in `self` as an array in the form `[cos, sin]`.
     #[inline]
     #[must_use]
     pub fn to_array(self) -> [T; 2] {
         [self.cos, self.sin]
     }
 
-    /// Returns the conjugate of `self`. For a unit complex number the
-    /// conjugate is also the inverse.
+    /// Returns the conjugate of `self`. For a unit complex number,
+    /// the conjugate is also the inverse.
     #[inline]
     #[must_use]
     pub fn conjugate(self) -> Self {
@@ -297,7 +304,7 @@ impl<T: Real> GRot2<T> {
     #[inline]
     #[must_use]
     pub fn is_near_identity(self) -> T::Bool {
-        // Same as `GQuat::is_near_identity` but for 2D rotations.
+        // Same as `GRot3::is_near_identity` but for 2D rotations.
         let threshold_sin = T::from_f32(0.000_049_692_047); // let threshold_angle = 0.002_847_144_6;
         self.cos.num_gt(T::ZERO) & self.sin.abs().num_lt(threshold_sin)
     }
@@ -375,7 +382,7 @@ impl<T: Real> GRot2<T> {
         self * Self::from_radians(self.angle_between(end) * s)
     }
 
-    /// Multiplies a quaternion and a 2D vector, returning the rotated vector.
+    /// Multiplies a 2D rotation and a 2D vector, returning the rotated vector.
     #[inline]
     #[must_use]
     pub fn mul_vec2(self, rhs: GVec2<T>) -> GVec2<T> {
@@ -392,6 +399,7 @@ impl<T: Real> GRot2<T> {
     /// Consider normalizing the result after several successive multiplications.
     #[inline]
     #[must_use]
+    #[doc(alias = "mul_complex")]
     pub fn mul_rot2(self, rhs: Self) -> Self {
         Self::from_cos_sin(
             self.cos * rhs.cos - self.sin * rhs.sin,
@@ -416,8 +424,8 @@ impl<T: Real> GRot2<T> {
 
     /// Creates a 2D rotation from a 2x2 rotation matrix inside a 2D affine transform.
     ///
-    /// Note if the input affine matrix contain scales, shears, or other non-rotation transformations,
-    /// the resulting rotation will be ill-defined.
+    /// Note that if the input affine matrix contains scales, shears, or other non-rotation
+    /// transformations, the output of this function is ill-defined.
     #[inline]
     #[must_use]
     pub fn from_affine2(a: &GAffine2<T>) -> Self {
@@ -510,12 +518,12 @@ impl<T: Real> Default for GRot2<T> {
 
 impl<T: Real + Add<Output = T>> Add for GRot2<T> {
     type Output = Self;
-    /// Adds two 2D rotations.
+    /// Adds two complex numbers.
     ///
     /// The sum is not guaranteed to be normalized.
     ///
     /// Note that addition is not the same as combining the rotations represented by the
-    /// two rotations! That corresponds to multiplication.
+    /// two complex numbers! That corresponds to multiplication.
     #[inline]
     fn add(self, rhs: GRot2<T>) -> Self {
         GRot2::from_vec2(GVec2::from(self) + GVec2::from(rhs))
@@ -562,12 +570,12 @@ impl<T: Real + Add<Output = T>> AddAssign<&GRot2<T>> for GRot2<T> {
 
 impl<T: Real + Sub<Output = T>> Sub for GRot2<T> {
     type Output = Self;
-    /// Subtracts the `rhs` 2D rotation from `self`.
+    /// Subtracts the `rhs` complex number from `self`.
     ///
     /// The difference is not guaranteed to be normalized.
     ///
     /// Note that subtraction is not the same as combining the rotations represented by the
-    /// two rotations! That corresponds to multiplication by the inverse.
+    /// two complex numbers! That corresponds to multiplication by the inverse.
     #[inline]
     fn sub(self, rhs: GRot2<T>) -> Self {
         GRot2::from_vec2(GVec2::from(self) - GVec2::from(rhs))
@@ -665,7 +673,7 @@ impl<T: Real + Mul<Output = T>> MulAssign<&GRot2<T>> for GRot2<T> {
 
 impl<T: Real + Mul<Output = T>> Mul<T> for GRot2<T> {
     type Output = GRot2<T>;
-    /// Multiplies a 2D rotation by a scalar value.
+    /// Multiplies a complex number by a scalar value.
     ///
     /// The product is not guaranteed to be normalized.
     #[inline]
@@ -747,7 +755,7 @@ impl<T: Real + Mul<Output = T>> Mul<&GVec2<T>> for &GRot2<T> {
 
 impl<T: Real + Div<Output = T>> Div<T> for GRot2<T> {
     type Output = Self;
-    /// Divides a 2D rotation by a scalar value.
+    /// Divides a complex number by a scalar value.
     ///
     /// The quotient is not guaranteed to be normalized.
     #[inline]

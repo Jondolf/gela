@@ -154,6 +154,7 @@ impl<T: Real> GAffine2<T> {
     /// Creates an affine transform from the given `rotation`.
     #[inline]
     #[must_use]
+    #[doc(alias = "from_complex")]
     pub fn from_rotation(rotation: GRot2<T>) -> Self {
         Self {
             matrix2: GMat2::from_rotation(rotation),
@@ -171,7 +172,7 @@ impl<T: Real> GAffine2<T> {
         }
     }
 
-    /// Creates an affine transform from a 2x2 matrix (expressing scale, shear and rotation).
+    /// Creates an affine transform from a 2x2 matrix (expressing scale, shear, and rotation).
     #[inline]
     #[must_use]
     pub fn from_mat2(matrix2: GMat2<T>) -> Self {
@@ -181,7 +182,7 @@ impl<T: Real> GAffine2<T> {
         }
     }
 
-    /// Creates an affine transform from a 2x2 matrix (expressing scale, shear and rotation) and a
+    /// Creates an affine transform from a 2x2 matrix (expressing scale, shear, and rotation) and a
     /// translation vector.
     ///
     /// Equivalent to `GAffine2::from_translation(translation) * GAffine2::from_mat2(mat2)`.
@@ -224,7 +225,9 @@ impl<T: Real> GAffine2<T> {
         }
     }
 
-    /// The given [`GMat3`] must be an affine transform,
+    /// Creates an affine transform from a 3x3 matrix.
+    ///
+    /// The given matrix must be an affine transform and not contain any perspective transform.
     #[inline]
     #[must_use]
     pub fn from_mat3(m: GMat3<T>) -> Self {

@@ -1,4 +1,4 @@
-use crate::rotation::GQuat;
+use crate::rotation::GRot3;
 use crate::vector::GVec3;
 
 use core::{iter::Product, ops::*};
@@ -18,7 +18,7 @@ use zerocopy_derive::*;
 #[repr(C)]
 pub struct GIso3<T: Real> {
     /// The rotational part of the isometry.
-    pub rotation: GQuat<T>,
+    pub rotation: GRot3<T>,
     /// The translational part of the isometry.
     pub translation: GVec3<T>,
 }
@@ -28,12 +28,12 @@ impl<T: Real> GIso3<T> {
     /// The identity isometry.
     ///
     /// Multiplying a vector with this returns the same vector.
-    pub const IDENTITY: Self = Self::from_rotation_translation(GQuat::IDENTITY, GVec3::ZERO);
+    pub const IDENTITY: Self = Self::from_rotation_translation(GRot3::IDENTITY, GVec3::ZERO);
 }
 
 impl<T: Float> GIso3<T> {
     /// All `NAN`.
-    pub const NAN: Self = Self::from_rotation_translation(GQuat::NAN, GVec3::NAN);
+    pub const NAN: Self = Self::from_rotation_translation(GRot3::NAN, GVec3::NAN);
 }
 
 /// # Constructors
@@ -41,7 +41,7 @@ impl<T: Real> GIso3<T> {
     /// Creates an isometry from a rotation and a translation.
     #[inline(always)]
     #[must_use]
-    pub const fn from_rotation_translation(rotation: GQuat<T>, translation: GVec3<T>) -> Self {
+    pub const fn from_rotation_translation(rotation: GRot3<T>, translation: GVec3<T>) -> Self {
         Self {
             rotation,
             translation,
@@ -57,7 +57,7 @@ impl<T: Real> GIso3<T> {
     #[must_use]
     pub fn select<B: Select<T>>(boolean: B, if_true: Self, if_false: Self) -> Self {
         Self {
-            rotation: GQuat::select(boolean, if_true.rotation, if_false.rotation),
+            rotation: GRot3::select(boolean, if_true.rotation, if_false.rotation),
             translation: GVec3::select(boolean, if_true.translation, if_false.translation),
         }
     }
@@ -65,7 +65,7 @@ impl<T: Real> GIso3<T> {
     /// Creates an isometry from the given `rotation`, with no translation.
     #[inline]
     #[must_use]
-    pub fn from_rotation(rotation: GQuat<T>) -> Self {
+    pub fn from_rotation(rotation: GRot3<T>) -> Self {
         Self {
             rotation,
             translation: GVec3::ZERO,
@@ -77,7 +77,7 @@ impl<T: Real> GIso3<T> {
     #[must_use]
     pub fn from_translation(translation: GVec3<T>) -> Self {
         Self {
-            rotation: GQuat::IDENTITY,
+            rotation: GRot3::IDENTITY,
             translation,
         }
     }
@@ -156,7 +156,7 @@ where
     #[inline]
     pub fn broadcast(value: GIso3<T::Element>) -> Self {
         Self {
-            rotation: GQuat::broadcast(value.rotation),
+            rotation: GRot3::broadcast(value.rotation),
             translation: GVec3::broadcast(value.translation),
         }
     }

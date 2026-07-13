@@ -1,5 +1,5 @@
 use crate::matrix::{GMat3, GMat4};
-use crate::rotation::GQuat;
+use crate::rotation::GRot3;
 use crate::vector::{GVec3, Vec4Swizzles};
 
 use core::{iter::Product, ops::*};
@@ -163,12 +163,13 @@ impl<T: Real> GAffine3<T> {
         }
     }
 
-    /// Creates an affine transform from the given `rotation` quaternion.
+    /// Creates an affine transform from the given `rotation`.
     #[inline]
     #[must_use]
-    pub fn from_quat(rotation: GQuat<T>) -> Self {
+    #[doc(alias = "from_quat")]
+    pub fn from_rotation(rotation: GRot3<T>) -> Self {
         Self {
-            matrix3: GMat3::from_quat(rotation),
+            matrix3: GMat3::from_rot3(rotation),
             translation: GVec3::ZERO,
         }
     }
@@ -228,7 +229,7 @@ impl<T: Real> GAffine3<T> {
         }
     }
 
-    /// Creates an affine transform from a 3x3 matrix (expressing scale, shear and rotation).
+    /// Creates an affine transform from a 3x3 matrix (expressing scale, shear, and rotation).
     #[inline]
     #[must_use]
     pub fn from_mat3(mat3: GMat3<T>) -> Self {
@@ -239,7 +240,7 @@ impl<T: Real> GAffine3<T> {
         }
     }
 
-    /// Creates an affine transform from a 3x3 matrix (expressing scale, shear and rotation)
+    /// Creates an affine transform from a 3x3 matrix (expressing scale, shear, and rotation)
     /// and a translation vector.
     ///
     /// Equivalent to `GAffine3::from_translation(translation) * GAffine3::from_mat3(mat3)`
@@ -253,19 +254,15 @@ impl<T: Real> GAffine3<T> {
         }
     }
 
-    /// Creates an affine transform from the given 3D `scale`, `rotation` and
-    /// `translation`.
-    ///
-    /// Equivalent to `GAffine3::from_translation(translation) *
-    /// GAffine3::from_quat(rotation) * GAffine3::from_scale(scale)`
+    /// Creates an affine transform from the given 3D `scale`, `rotation`, and `translation`.
     #[inline]
     #[must_use]
     pub fn from_scale_rotation_translation(
         scale: GVec3<T>,
-        rotation: GQuat<T>,
+        rotation: GRot3<T>,
         translation: GVec3<T>,
     ) -> Self {
-        let rotation = GMat3::from_quat(rotation);
+        let rotation = GMat3::from_rot3(rotation);
         #[allow(clippy::useless_conversion)]
         Self {
             matrix3: GMat3::from_cols(
@@ -278,19 +275,19 @@ impl<T: Real> GAffine3<T> {
     }
 
     /// Creates an affine transform from the given 3D `rotation` and `translation`.
-    ///
-    /// Equivalent to `GAffine3::from_translation(translation) * GAffine3::from_quat(rotation)`
     #[inline]
     #[must_use]
-    pub fn from_rotation_translation(rotation: GQuat<T>, translation: GVec3<T>) -> Self {
+    pub fn from_rotation_translation(rotation: GRot3<T>, translation: GVec3<T>) -> Self {
         #[allow(clippy::useless_conversion)]
         Self {
-            matrix3: GMat3::from_quat(rotation),
+            matrix3: GMat3::from_rot3(rotation),
             translation: translation.into(),
         }
     }
 
-    /// The given `GMat4` must be an affine transform, i.e. contain no perspective transform.
+    /// Creates an affine transform from a 4x4 matrix.
+    ///
+    /// The given matrix must be an affine transform and not contain any perspective transform.
     #[inline]
     #[must_use]
     pub fn from_mat4(m: GMat4<T>) -> Self {
@@ -306,7 +303,7 @@ impl<T: Real> GAffine3<T> {
     /// will be invalid.
     #[inline]
     #[must_use]
-    pub fn to_scale_rotation_translation(&self) -> (GVec3<T>, GQuat<T>, GVec3<T>) {
+    pub fn to_scale_rotation_translation(&self) -> (GVec3<T>, GRot3<T>, GVec3<T>) {
         let det = self.matrix3.determinant();
 
         let scale = GVec3::new(
@@ -318,7 +315,7 @@ impl<T: Real> GAffine3<T> {
         let inv_scale = scale.recip();
 
         #[allow(clippy::useless_conversion)]
-        let rotation = GQuat::from_mat3(&GMat3::from_cols(
+        let rotation = GRot3::from_mat3(&GMat3::from_cols(
             (self.matrix3.x_axis * inv_scale.x).into(),
             (self.matrix3.y_axis * inv_scale.y).into(),
             (self.matrix3.z_axis * inv_scale.z).into(),

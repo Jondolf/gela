@@ -16,19 +16,24 @@ use gnum::{
 #[cfg(feature = "zerocopy")]
 use zerocopy_derive::*;
 
-/// Creates a quaternion.
+/// Creates a 3D rotation quaternion.
 ///
 /// This should generally not be called manually unless you know what you are doing.
 /// Use one of the other constructors instead such as [`from_axis_angle`].
 ///
-/// [`from_axis_angle`]: GQuat::from_axis_angle
+/// [`from_axis_angle`]: GRot3::from_axis_angle
 #[inline(always)]
 #[must_use]
-pub const fn gquat<T: Real>(x: T, y: T, z: T, w: T) -> GQuat<T> {
-    GQuat::from_xyzw(x, y, z, w)
+pub const fn gquat<T: Real>(x: T, y: T, z: T, w: T) -> GRot3<T> {
+    GRot3::from_xyzw(x, y, z, w)
 }
 
-/// A 4-dimensional quaternion.
+/// A 3D rotation represented as a quaternion.
+///
+/// The quaternion is intended to be of unit length to represent a valid rotation,
+/// but it may become denormalized through error accumulation over successive operations.
+/// Users are responsible for normalizing the quaternion when necessary, using methods
+/// such as [`normalize`](Self::normalize).
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
 #[cfg_attr(
@@ -38,52 +43,65 @@ pub const fn gquat<T: Real>(x: T, y: T, z: T, w: T) -> GQuat<T> {
 #[repr(align(16))]
 #[repr(C)]
 #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
-pub struct GQuat<T: Real> {
-    /// The X component of the quaternion.
+#[doc(alias = "GQuat")]
+pub struct GRot3<T: Real> {
+    /// The X component of the rotation quaternion.
+    ///
+    /// For a normalized quaternion, this is the X component of the rotation axis
+    /// multiplied by `sin(angle / 2)`.
     pub x: T,
-    /// The Y component of the quaternion.
+    /// The Y component of the rotation quaternion.
+    ///
+    /// For a normalized quaternion, this is the Y component of the rotation axis
+    /// multiplied by `sin(angle / 2)`.
     pub y: T,
-    /// The Z component of the quaternion.
+    /// The Z component of the rotation quaternion.
+    ///
+    /// For a normalized quaternion, this is the Z component of the rotation axis
+    /// multiplied by `sin(angle / 2)`.
     pub z: T,
-    /// The W component of the quaternion.
+    /// The W component of the rotation quaternion.
+    ///
+    /// For a normalized quaternion, this is `cos(angle / 2)`, representing
+    /// the amount of rotation about the axis.
     pub w: T,
 }
 
 /// # Basic Number Constants
-impl<T: Real> GQuat<T> {
+impl<T: Real> GRot3<T> {
     /// All zeros.
     pub const ZERO: Self = Self::from_xyzw(T::ZERO, T::ZERO, T::ZERO, T::ZERO);
 
-    /// The identity quaternion. Corresponds to no rotation.
+    /// The identity rotation. Corresponds to no rotation.
     pub const IDENTITY: Self = Self::from_xyzw(T::ZERO, T::ZERO, T::ZERO, T::ONE);
 }
 
 /// # Float Constants
-impl<T: Float> GQuat<T> {
+impl<T: Float> GRot3<T> {
     /// All `NaN`.
     pub const NAN: Self = Self::from_xyzw(T::NAN, T::NAN, T::NAN, T::NAN);
 }
 
 /// # Constructors
-impl<T: Real> GQuat<T> {
-    /// Creates a new rotation quaternion.
+impl<T: Real> GRot3<T> {
+    /// Creates a new 3D rotation.
     ///
     /// This should generally not be called manually unless you know what you are doing.
-    /// Use one of the other constructors instead such as `from_axis_angle`.
+    /// Use one of the other constructors instead such as [`from_axis_angle`].
     ///
-    /// `from_xyzw` is mostly used by unit tests and `serde` deserialization.
+    /// [`from_axis_angle`]: GRot3::from_axis_angle
     ///
     /// # Preconditions
     ///
     /// This function does not check if the input is normalized, it is up to the user to
-    /// provide normalized input or to normalized the resulting quaternion.
+    /// provide normalized input or to normalized the resulting rotation.
     #[inline(always)]
     #[must_use]
     pub const fn from_xyzw(x: T, y: T, z: T, w: T) -> Self {
         Self { x, y, z, w }
     }
 
-    /// Creates a quaternion from the elements in `if_true` and `if_false`, selecting which to use
+    /// Creates a 3D rotation from the elements in `if_true` and `if_false`, selecting which to use
     /// based on the given `boolean`.
     ///
     /// A true boolean uses the corresponding element from `if_true`, and false
@@ -99,24 +117,24 @@ impl<T: Real> GQuat<T> {
         }
     }
 
-    /// Creates a new rotation quaternion from an array.
+    /// Creates a new 3D rotation from an array in the form `[x, y, z, w]`.
     ///
     /// # Preconditions
     ///
     /// This function does not check if the input is normalized, it is up to the user to
-    /// provide normalized input or to normalized the resulting quaternion.
+    /// provide normalized input or to normalized the resulting rotation.
     #[inline]
     #[must_use]
     pub const fn from_array(a: [T; 4]) -> Self {
         Self::from_xyzw(a[0], a[1], a[2], a[3])
     }
 
-    /// Creates a new rotation quaternion from a 4D vector.
+    /// Creates a new 3D rotation from a 4D vector in the form `[x, y, z, w]`.
     ///
     /// # Preconditions
     ///
     /// This function does not check if the input is normalized, it is up to the user to
-    /// provide normalized input or to normalized the resulting quaternion.
+    /// provide normalized input or to normalized the resulting rotation.
     #[inline]
     #[must_use]
     pub const fn from_vec4(v: GVec4<T>) -> Self {
@@ -128,12 +146,12 @@ impl<T: Real> GQuat<T> {
         }
     }
 
-    /// Creates a rotation quaternion from a slice.
+    /// Creates a 3D rotation from a slice in the form `[x, y, z, w]`.
     ///
     /// # Preconditions
     ///
     /// This function does not check if the input is normalized, it is up to the user to
-    /// provide normalized input or to normalized the resulting quaternion.
+    /// provide normalized input or to normalized the resulting rotation.
     ///
     /// # Panics
     ///
@@ -144,7 +162,7 @@ impl<T: Real> GQuat<T> {
         Self::from_xyzw(slice[0], slice[1], slice[2], slice[3])
     }
 
-    /// Writes the quaternion to an unaligned slice.
+    /// Writes the 3D rotation to an unaligned slice in the form `[x, y, z, w]`.
     ///
     /// # Panics
     ///
@@ -157,7 +175,7 @@ impl<T: Real> GQuat<T> {
         slice[3] = self.w;
     }
 
-    /// Create a quaternion for a normalized rotation `axis` and `angle` (in radians).
+    /// Creates a 3D rotation from a normalized rotation `axis` and `angle` (in radians).
     ///
     /// The axis must be a unit vector.
     #[inline]
@@ -168,9 +186,9 @@ impl<T: Real> GQuat<T> {
         Self::from_xyzw(v.x, v.y, v.z, c)
     }
 
-    /// Create a quaternion that rotates `v.length()` radians around `v.normalize()`.
+    /// Creates a 3D rotation that rotates `v.length()` radians around `v.normalize()`.
     ///
-    /// `from_scaled_axis(GVec3::ZERO)` results in the identity quaternion.
+    /// `from_scaled_axis(GVec3::ZERO)` results in the identity rotation.
     #[inline]
     #[must_use]
     pub fn from_scaled_axis(v: GVec3<T>) -> Self {
@@ -180,7 +198,7 @@ impl<T: Real> GQuat<T> {
         Self::select(mask, Self::IDENTITY, q)
     }
 
-    /// Creates a quaternion from the `angle` (in radians) around the x axis.
+    /// Creates a 3D rotation from the `angle` (in radians) around the x axis.
     #[inline]
     #[must_use]
     pub fn from_rotation_x(angle: T) -> Self {
@@ -188,7 +206,7 @@ impl<T: Real> GQuat<T> {
         Self::from_xyzw(s, T::ZERO, T::ZERO, c)
     }
 
-    /// Creates a quaternion from the `angle` (in radians) around the y axis.
+    /// Creates a 3D rotation from the `angle` (in radians) around the y axis.
     #[inline]
     #[must_use]
     pub fn from_rotation_y(angle: T) -> Self {
@@ -196,7 +214,7 @@ impl<T: Real> GQuat<T> {
         Self::from_xyzw(T::ZERO, s, T::ZERO, c)
     }
 
-    /// Creates a quaternion from the `angle` (in radians) around the z axis.
+    /// Creates a 3D rotation from the `angle` (in radians) around the z axis.
     #[inline]
     #[must_use]
     pub fn from_rotation_z(angle: T) -> Self {
@@ -204,17 +222,17 @@ impl<T: Real> GQuat<T> {
         Self::from_xyzw(T::ZERO, T::ZERO, s, c)
     }
 
-    /// From the columns of a 3x3 rotation matrix.
+    /// Creates a 3D rotation from the columns of a 3x3 rotation matrix.
     ///
-    /// Note if the input axes contain scales, shears, or other non-rotation transformations,
-    /// the output of this function is ill-defined.
+    /// Note that if the input axes contain scales, shears, or other non-rotation
+    /// transformations, the output of this function is ill-defined.
     #[inline]
     #[must_use]
     pub fn from_rotation_axes(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>) -> Self {
         // This is ugly; we want separate scalar and vectorized paths,
         // but we can't do that at compile time without specialization.
         if T::LANES == 1 {
-            // Based on https://github.com/microsoft/DirectXMath `XMQuaternionRotationMatrix`
+            // Based on https://github.com/microsoft/DirectXMath `XMRot3ernionRotationMatrix`
             let (m00, m01, m02) = x_axis.into();
             let (m10, m11, m12) = y_axis.into();
             let (m20, m21, m22) = z_axis.into();
@@ -273,7 +291,7 @@ impl<T: Real> GQuat<T> {
             // For the vectorized path, we need to compute the possible states of all branches.
             // This is more ALU work than the branching version, but there are a lot of shared terms.
             // Because this handles multiple lanes, it's still a net win over branching.
-            // Reference: https://github.com/bepu/bepuphysics2/blob/master/BepuUtilities/QuaternionWide.cs
+            // Reference: https://github.com/bepu/bepuphysics2/blob/master/BepuUtilities/Rot3ernionWide.cs
 
             // TODO: Is this bit-for-bit identical to the scalar path? If not, change the scalar path.
             let m00 = x_axis.x;
@@ -329,20 +347,20 @@ impl<T: Real> GQuat<T> {
         }
     }
 
-    /// Creates a quaternion from a 3x3 rotation matrix.
+    /// Creates a 3D rotation from a 3x3 rotation matrix.
     ///
-    /// Note if the input matrix contain scales, shears, or other non-rotation transformations,
-    /// the resulting quaternion will be ill-defined.
+    /// Note that if the input matrix contain scales, shears, or other non-rotation
+    /// transformations, the output of this function is ill-defined.
     #[inline]
     #[must_use]
     pub fn from_mat3(mat: &GMat3<T>) -> Self {
         Self::from_rotation_axes(mat.x_axis, mat.y_axis, mat.z_axis)
     }
 
-    /// Creates a quaternion from the upper 3x3 rotation matrix inside a homogeneous 4x4 matrix.
+    /// Creates a 3D rotation from the upper 3x3 rotation matrix inside a homogeneous 4x4 matrix.
     ///
-    /// Note if the upper 3x3 matrix contain scales, shears, or other non-rotation transformations,
-    /// the resulting quaternion will be ill-defined.
+    /// Note that if the upper 3x3 matrix contain scales, shears, or other non-rotation
+    /// transformations, the output of this function is ill-defined.
     #[inline]
     #[must_use]
     pub fn from_mat4(mat: &GMat4<T>) -> Self {
@@ -354,8 +372,9 @@ impl<T: Real> GQuat<T> {
     }
 }
 
-impl<T: ScalarReal> GQuat<T> {
-    /// Creates a quaternion from the given Euler rotation sequence and the angles (in radians).
+impl<T: ScalarReal> GRot3<T> {
+    /// Creates a 3D rotation from the given Euler rotation sequence
+    /// and angles (in radians).
     #[inline]
     #[must_use]
     pub fn from_euler(euler: EulerRot, a: T, b: T, c: T) -> Self {
@@ -363,26 +382,25 @@ impl<T: ScalarReal> GQuat<T> {
     }
 }
 
-impl<T: Float> GQuat<T> {
-    /// Gets the minimal rotation for transforming `from` to `to`.  The rotation is in the
-    /// plane spanned by the two vectors.  Will rotate at most 180 degrees.
+impl<T: Float> GRot3<T> {
+    /// Computes the minimal rotation required for transforming `from` into `to`,
+    /// such that `GRot3::from_rotation_arc(from, to) * from =≈ to`.
     ///
-    /// The inputs must be unit vectors.
+    /// The rotation is in the plane spanned by the two vectors. This will rotate
+    /// at most 180 degrees. The inputs must be unit vectors.
     ///
-    /// `from_rotation_arc(from, to) * from ≈ to`.
-    ///
-    /// For near-singular cases (from≈to and from≈-to) the current implementation
-    /// is only accurate to about 0.001 (for `f32`).
+    /// For near-singular cases (near `from =≈ to` and `from =≈ -to`) the current implementation
+    /// is only accurate to about `0.001` (for `f32`).
     #[must_use]
     pub fn from_rotation_arc(from: GVec3<T>, to: GVec3<T>) -> Self {
         let one_minus_eps: T = T::ONE - (T::ONE + T::ONE) * T::EPSILON;
 
         let dot = from.dot(to);
 
-        // 0° singularity: from ≈ to
+        // 0° singularity: from ≈= to
         let gt = dot.num_gt(one_minus_eps);
 
-        // 180° singularity: from ≈ -to
+        // 180° singularity: from =≈ -to
         let lt = dot.num_lt(-one_minus_eps);
         let q_lt = Self::from_axis_angle(from.any_orthonormal_vector(), T::PI);
 
@@ -393,15 +411,11 @@ impl<T: Float> GQuat<T> {
         Self::select(gt, Self::IDENTITY, Self::select(lt, q_lt, q_else))
     }
 
-    /// Gets the minimal rotation for transforming `from` to either `to` or `-to`.  This means
-    /// that the resulting quaternion will rotate `from` so that it is colinear with `to`.
+    /// Computes the minimal rotation required for transforming `from` into either `to` or `-to`,
+    /// such that `to.dot(GRot3::from_rotation_arc_colinear(from, to) * from).abs() ≈= 1.0`.
     ///
-    /// The rotation is in the plane spanned by the two vectors.  Will rotate at most 90
-    /// degrees.
-    ///
-    /// The inputs must be unit vectors.
-    ///
-    /// `to.dot(from_rotation_arc_colinear(from, to) * from).abs() ≈ 1`.
+    /// The rotation is in the plane spanned by the two vectors. This will rotate
+    /// at most 90 degrees. The inputs must be unit vectors.
     #[inline]
     #[must_use]
     pub fn from_rotation_arc_colinear(from: GVec3<T>, to: GVec3<T>) -> Self {
@@ -424,15 +438,14 @@ impl<T: Float> GQuat<T> {
         }
     }
 
-    /// Gets the minimal rotation for transforming `from` to `to`.  The resulting rotation is
-    /// around the z axis. Will rotate at most 180 degrees.
+    /// Computes the minimal rotation required for transforming `from` into `to`,
+    /// such that `GRot3::from_rotation_arc_2d(from, to) * from =≈ to`.
     ///
-    /// The inputs must be unit vectors.
+    /// The resulting rotation is about the z axis. This will rotate
+    /// at most 180 degrees. The inputs must be unit vectors.
     ///
-    /// `from_rotation_arc_2d(from, to) * from ≈ to`.
-    ///
-    /// For near-singular cases (from≈to and from≈-to) the current implementation
-    /// is only accurate to about 0.001 (for `f32`).
+    /// For near-singular cases (near `from =≈ to` and `from =≈ -to`) the current implementation
+    /// is only accurate to about `0.001` (for `f32`).
     #[must_use]
     pub fn from_rotation_arc_2d(from: GVec2<T>, to: GVec2<T>) -> Self {
         let one_minus_eps: T = T::ONE - (T::ONE + T::ONE) * T::EPSILON;
@@ -469,19 +482,19 @@ impl<T: Float> GQuat<T> {
     }
 }
 
-impl<T: Real> GQuat<T> {
-    /// Creates a quaterion rotation from a facing direction and an up direction.
+impl<T: Real> GRot3<T> {
+    /// Creates a 3D rotation from a facing direction and an up direction.
     ///
-    /// For a left-handed view coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
+    /// This is for a left-handed coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
     #[inline]
     #[must_use]
     pub fn look_to_lh(dir: GVec3<T>, up: GVec3<T>) -> Self {
         Self::look_to_rh(-dir, up)
     }
 
-    /// Creates a quaterion rotation from facing direction and an up direction.
+    /// Creates a 3D rotation from facing direction and an up direction.
     ///
-    /// For a right-handed view coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
+    /// This is for a right-handed coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
     #[inline]
     #[must_use]
     pub fn look_to_rh(dir: GVec3<T>, up: GVec3<T>) -> Self {
@@ -496,27 +509,25 @@ impl<T: Real> GQuat<T> {
         )
     }
 
-    /// Creates a left-handed view matrix using a camera position, a focal point, and an up
-    /// direction.
+    /// Creates a 3D rotation using a camera position, a focal point, and an up direction.
     ///
-    /// For a left-handed view coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
+    /// This is for a left-handed coordinate system with `+X=right`, `+Y=up` and `+Z=forward`.
     #[inline]
     #[must_use]
     pub fn look_at_lh(eye: GVec3<T>, center: GVec3<T>, up: GVec3<T>) -> Self {
         Self::look_to_lh(center.sub(eye).normalize(), up)
     }
 
-    /// Creates a right-handed view matrix using a camera position, an up direction, and a focal
-    /// point.
+    /// Creates a 3D rotation using a camera position, a focal point, and an up direction.
     ///
-    /// For a right-handed view coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
+    /// This is for a right-handed coordinate system with `+X=right`, `+Y=up` and `+Z=back`.
     #[inline]
     #[must_use]
     pub fn look_at_rh(eye: GVec3<T>, center: GVec3<T>, up: GVec3<T>) -> Self {
         Self::look_to_rh(center.sub(eye).normalize(), up)
     }
 
-    /// Returns the rotation axis (normalized) and angle (in radians) of `self`.
+    /// Returns the normalized rotation axis and angle (in radians) of `self`.
     #[inline]
     #[must_use]
     pub fn to_axis_angle(self) -> (GVec3<T>, T) {
@@ -542,7 +553,7 @@ impl<T: Real> GQuat<T> {
         axis * angle
     }
 
-    /// `[x, y, z, w]`
+    /// Returns the quaternion in `self` as an array in the form `[x, y, z, w]`.
     #[inline]
     #[must_use]
     pub fn to_array(self) -> [T; 4] {
@@ -550,6 +561,8 @@ impl<T: Real> GQuat<T> {
     }
 
     /// Returns the vector part of the quaternion.
+    ///
+    /// For a normalized quaternion, this is the rotation axis multiplied by `sin(angle / 2)`.
     #[inline]
     #[must_use]
     pub fn xyz(self) -> GVec3<T> {
@@ -557,8 +570,8 @@ impl<T: Real> GQuat<T> {
     }
 }
 
-impl<T: ScalarReal> GQuat<T> {
-    /// Returns the rotation angles for the given euler rotation sequence.
+impl<T: ScalarReal> GRot3<T> {
+    /// Returns the rotation angles for the given Euler rotation sequence.
     #[inline]
     #[must_use]
     pub fn to_euler(self, order: EulerRot) -> (T, T, T) {
@@ -566,10 +579,9 @@ impl<T: ScalarReal> GQuat<T> {
     }
 }
 
-/// # Quaternion Operations
-impl<T: Real> GQuat<T> {
-    /// Returns the quaternion conjugate of `self`. For a unit quaternion the
-    /// conjugate is also the inverse.
+impl<T: Real> GRot3<T> {
+    /// Returns the conjugate of `self`. For a unit quaternion,
+    /// the conjugate is also the inverse.
     #[inline]
     #[must_use]
     pub fn conjugate(self) -> Self {
@@ -581,9 +593,9 @@ impl<T: Real> GQuat<T> {
         }
     }
 
-    /// Returns the inverse of a normalized quaternion.
+    /// Returns the inverse of a normalized 3D rotation.
     ///
-    /// Typically, the inverse returns the conjugate of a normalized quaternion.
+    /// Typically, the inverse returns the conjugate of a normalized 3D rotation.
     /// Because `self` is assumed to already be unit length, this method *does not*
     /// normalize before returning the conjugate.
     #[inline]
@@ -593,7 +605,7 @@ impl<T: Real> GQuat<T> {
     }
 
     /// Computes the dot product of `self` and `rhs`. The dot product is
-    /// equal to the cosine of the angle between two quaternion rotations.
+    /// equal to the cosine of the angle between two 3D rotations.
     #[inline]
     #[must_use]
     pub fn dot(self, rhs: Self) -> T {
@@ -631,6 +643,7 @@ impl<T: Real> GQuat<T> {
     /// Returns `self` normalized to length 1.0.
     ///
     /// For valid results, `self` must _not_ be of length zero.
+    // TODO: Benchmark the `normalize_fast()` version, especially for SIMD types.
     #[inline]
     #[must_use]
     pub fn normalize(self) -> Self {
@@ -644,21 +657,24 @@ impl<T: Real> GQuat<T> {
         GVec4::from(self).is_normalized(eps)
     }
 
-    /// Returns whether `self` is near the identity quaternion.
+    /// Returns whether `self` is near the identity rotation.
     #[inline]
     #[must_use]
     pub fn is_near_identity(self) -> T::Bool {
-        // Based on https://github.com/nfrechette/rtm `rtm::quat_near_identity`
+        // Based on https://github.com/nfrechette/rtm `rtm::quat_near_identity`.
+        //
         // Because of floating point precision, we cannot represent very small rotations.
+        //
         // The closest f32 to 1.0 that is not 1.0 itself yields:
-        // 0.99999994.acos_stable() * 2.0  = 0.000690533954 rad
+        // 0.99999994.acos() * 2.0 = 0.000690533954 rad
         //
         // An error threshold of 1.e-6 is used by default.
-        // (1.0 - 1.e-6).acos_stable() * 2.0 = 0.00284714461 rad
-        // (1.0 - 1.e-7).acos_stable() * 2.0 = 0.00097656250 rad
+        // (1.0 - 1.e-6).acos() * 2.0 = 0.00284714461 rad
+        // (1.0 - 1.e-7).acos() * 2.0 = 0.00097656250 rad
         //
         // We don't really care about the angle value itself, only if it's close to 0.
         // This will happen whenever quat.w is close to 1.0.
+        //
         // If the quat.w is close to -1.0, the angle will be near 2*PI which is close to
         // a negative 0 rotation. By forcing quat.w to be positive, we'll end up with
         // the shortest path.
@@ -670,12 +686,13 @@ impl<T: Real> GQuat<T> {
     }
 
     /// Returns the angle (in radians) for the minimal rotation
-    /// for transforming this quaternion into another.
+    /// for transforming this 3D rotation into another.
     ///
-    /// Both quaternions must be normalized.
+    /// Both rotations must be normalized.
     #[inline]
     #[must_use]
     pub fn angle_between(self, rhs: Self) -> T {
+        // TODO: This loses precision for very small angles.
         self.dot(rhs).abs().min(T::ONE).acos_stable() * (T::ONE + T::ONE)
     }
 
@@ -685,7 +702,7 @@ impl<T: Real> GQuat<T> {
     /// `self.angle_between(rhs)`, the result will be equal to `rhs`. If `max_angle` is negative,
     /// rotates towards the exact opposite of `rhs`. Will not go past the target.
     ///
-    /// Both quaternions must be normalized.
+    /// Both rotations must be normalized.
     #[inline]
     #[must_use]
     pub fn rotate_towards(self, rhs: Self, max_angle: T) -> Self {
@@ -698,7 +715,7 @@ impl<T: Real> GQuat<T> {
     /// Returns true if the absolute difference of all elements between `self` and `rhs`
     /// is less than or equal to `max_abs_diff`.
     ///
-    /// This can be used to compare if two quaternions contain similar elements. It works
+    /// This can be used to compare if two 3D rotations contain similar elements. It works
     /// best when comparing with a known value. The `max_abs_diff` that should be used used
     /// depends on the values being compared against.
     ///
@@ -768,7 +785,7 @@ impl<T: Real> GQuat<T> {
         Self::select(use_linear, lerp, slerp)
     }
 
-    /// Multiplies a quaternion and a 3D vector, returning the rotated vector.
+    /// Multiplies a 3D rotation and a 3D vector, returning the rotated vector.
     #[inline]
     #[must_use]
     pub fn mul_vec3(self, rhs: GVec3<T>) -> GVec3<T> {
@@ -781,14 +798,15 @@ impl<T: Real> GQuat<T> {
             .add(b.cross(rhs).mul(w * two))
     }
 
-    /// Multiplies two quaternions. If they each represent a rotation, the result will
+    /// Multiplies two 3D rotations. If they are both normalized, the result will
     /// represent the combined rotation.
     ///
     /// Note that due to floating point rounding, the result may not be perfectly normalized.
     /// Consider normalizing the result after several successive multiplications.
     #[inline]
     #[must_use]
-    pub fn mul_quat(self, rhs: Self) -> Self {
+    #[doc(alias = "mul_quat")]
+    pub fn mul_rot3(self, rhs: Self) -> Self {
         let (x0, y0, z0, w0) = self.into();
         let (x1, y1, z1, w1) = rhs.into();
         Self::from_xyzw(
@@ -799,19 +817,19 @@ impl<T: Real> GQuat<T> {
         )
     }
 
-    /// Creates a quaternion from a 3x3 rotation matrix inside a 3D affine transform.
+    /// Creates a 3D rotation from a 3x3 rotation matrix inside a 3D affine transform.
     ///
-    /// Note if the input affine matrix contain scales, shears, or other non-rotation transformations,
-    /// the resulting quaternion will be ill-defined.
+    /// Note that if the input affine matrix contains scales, shears, or other non-rotation
+    /// transformations, the output of this function is ill-defined.
     #[inline]
     #[must_use]
     pub fn from_affine3(a: &GAffine3<T>) -> Self {
-        Self::from_rotation_axes(a.matrix3.x_axis, a.matrix3.y_axis, a.matrix3.z_axis)
+        Self::from_mat3(&a.matrix3)
     }
 }
 
 /// # Float Methods
-impl<T: Float> GQuat<T> {
+impl<T: Float> GRot3<T> {
     /// Returns `true` if, and only if, all elements are finite.
     /// If any element is either `NaN`, positive or negative infinity, this will return `false`.
     #[inline]
@@ -829,13 +847,13 @@ impl<T: Float> GQuat<T> {
 }
 
 /// # SIMD Operations
-impl<T: Real> GQuat<T>
+impl<T: Real> GRot3<T>
 where
     T::Element: Real,
 {
-    /// Broadcasts a scalar quaternion into a SIMD quaternion, filling all lanes with the same value.
+    /// Broadcasts a scalar 3D rotation into a SIMD 3D rotation, filling all lanes with the same value.
     #[inline]
-    pub fn broadcast(value: GQuat<T::Element>) -> Self {
+    pub fn broadcast(value: GRot3<T::Element>) -> Self {
         Self::from_xyzw(
             T::splat(value.x),
             T::splat(value.y),
@@ -851,8 +869,8 @@ where
     /// Panics if `i >= T::LANES`.
     #[inline]
     #[must_use]
-    pub fn extract(&self, i: usize) -> GQuat<T::Element> {
-        GQuat::from_xyzw(
+    pub fn extract(&self, i: usize) -> GRot3<T::Element> {
+        GRot3::from_xyzw(
             self.x.extract(i),
             self.y.extract(i),
             self.z.extract(i),
@@ -867,9 +885,9 @@ where
     /// Undefined behavior if `i >= T::LANES`.
     #[inline]
     #[must_use]
-    pub unsafe fn extract_unchecked(&self, i: usize) -> GQuat<T::Element> {
+    pub unsafe fn extract_unchecked(&self, i: usize) -> GRot3<T::Element> {
         unsafe {
-            GQuat::from_xyzw(
+            GRot3::from_xyzw(
                 self.x.extract_unchecked(i),
                 self.y.extract_unchecked(i),
                 self.z.extract_unchecked(i),
@@ -884,7 +902,7 @@ where
     ///
     /// Panics if `i >= T::LANES`.
     #[inline]
-    pub fn replace(&mut self, i: usize, value: GQuat<T::Element>) {
+    pub fn replace(&mut self, i: usize, value: GRot3<T::Element>) {
         self.x.replace(i, value.x);
         self.y.replace(i, value.y);
         self.z.replace(i, value.z);
@@ -897,7 +915,7 @@ where
     ///
     /// Undefined behavior if `i >= T::LANES`.
     #[inline]
-    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GQuat<T::Element>) {
+    pub unsafe fn replace_unchecked(&mut self, i: usize, value: GRot3<T::Element>) {
         unsafe {
             self.x.replace_unchecked(i, value.x);
             self.y.replace_unchecked(i, value.y);
@@ -907,14 +925,14 @@ where
     }
 }
 
-impl<T: Real> Default for GQuat<T> {
+impl<T: Real> Default for GRot3<T> {
     #[inline]
     fn default() -> Self {
         Self::IDENTITY
     }
 }
 
-impl<T: Real + Add<Output = T>> Add for GQuat<T> {
+impl<T: Real + Add<Output = T>> Add for GRot3<T> {
     type Output = Self;
     /// Adds two quaternions.
     ///
@@ -923,50 +941,50 @@ impl<T: Real + Add<Output = T>> Add for GQuat<T> {
     /// Note that addition is not the same as combining the rotations represented by the
     /// two quaternions! That corresponds to multiplication.
     #[inline]
-    fn add(self, rhs: GQuat<T>) -> Self {
-        GQuat::from_vec4(GVec4::from(self) + GVec4::from(rhs))
+    fn add(self, rhs: GRot3<T>) -> Self {
+        GRot3::from_vec4(GVec4::from(self) + GVec4::from(rhs))
     }
 }
 
-impl<T: Real + Add<Output = T>> Add<&GQuat<T>> for GQuat<T> {
+impl<T: Real + Add<Output = T>> Add<&GRot3<T>> for GRot3<T> {
     type Output = Self;
     #[inline]
-    fn add(self, rhs: &GQuat<T>) -> Self {
+    fn add(self, rhs: &GRot3<T>) -> Self {
         self.add(*rhs)
     }
 }
 
-impl<T: Real + Add<Output = T>> Add<GQuat<T>> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Add<Output = T>> Add<GRot3<T>> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn add(self, rhs: GQuat<T>) -> GQuat<T> {
+    fn add(self, rhs: GRot3<T>) -> GRot3<T> {
         (*self).add(rhs)
     }
 }
 
-impl<T: Real + Add<Output = T>> Add<&GQuat<T>> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Add<Output = T>> Add<&GRot3<T>> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn add(self, rhs: &GQuat<T>) -> GQuat<T> {
+    fn add(self, rhs: &GRot3<T>) -> GRot3<T> {
         (*self).add(*rhs)
     }
 }
 
-impl<T: Real + Add<Output = T>> AddAssign for GQuat<T> {
+impl<T: Real + Add<Output = T>> AddAssign for GRot3<T> {
     #[inline]
-    fn add_assign(&mut self, rhs: GQuat<T>) {
+    fn add_assign(&mut self, rhs: GRot3<T>) {
         *self = self.add(rhs);
     }
 }
 
-impl<T: Real + Add<Output = T>> AddAssign<&GQuat<T>> for GQuat<T> {
+impl<T: Real + Add<Output = T>> AddAssign<&GRot3<T>> for GRot3<T> {
     #[inline]
-    fn add_assign(&mut self, rhs: &GQuat<T>) {
+    fn add_assign(&mut self, rhs: &GRot3<T>) {
         self.add_assign(*rhs);
     }
 }
 
-impl<T: Real + Sub<Output = T>> Sub for GQuat<T> {
+impl<T: Real + Sub<Output = T>> Sub for GRot3<T> {
     type Output = Self;
     /// Subtracts the `rhs` quaternion from `self`.
     ///
@@ -975,159 +993,159 @@ impl<T: Real + Sub<Output = T>> Sub for GQuat<T> {
     /// Note that subtraction is not the same as combining the rotations represented by the
     /// two quaternions! That corresponds to multiplication by the inverse.
     #[inline]
-    fn sub(self, rhs: GQuat<T>) -> Self {
-        GQuat::from_vec4(GVec4::from(self) - GVec4::from(rhs))
+    fn sub(self, rhs: GRot3<T>) -> Self {
+        GRot3::from_vec4(GVec4::from(self) - GVec4::from(rhs))
     }
 }
 
-impl<T: Real + Sub<Output = T>> Sub<&GQuat<T>> for GQuat<T> {
+impl<T: Real + Sub<Output = T>> Sub<&GRot3<T>> for GRot3<T> {
     type Output = Self;
     #[inline]
-    fn sub(self, rhs: &GQuat<T>) -> Self {
+    fn sub(self, rhs: &GRot3<T>) -> Self {
         self.sub(*rhs)
     }
 }
 
-impl<T: Real + Sub<Output = T>> Sub<GQuat<T>> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Sub<Output = T>> Sub<GRot3<T>> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn sub(self, rhs: GQuat<T>) -> GQuat<T> {
+    fn sub(self, rhs: GRot3<T>) -> GRot3<T> {
         (*self).sub(rhs)
     }
 }
 
-impl<T: Real + Sub<Output = T>> Sub<&GQuat<T>> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Sub<Output = T>> Sub<&GRot3<T>> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn sub(self, rhs: &GQuat<T>) -> GQuat<T> {
+    fn sub(self, rhs: &GRot3<T>) -> GRot3<T> {
         (*self).sub(*rhs)
     }
 }
 
-impl<T: Real + Sub<Output = T>> SubAssign for GQuat<T> {
+impl<T: Real + Sub<Output = T>> SubAssign for GRot3<T> {
     #[inline]
-    fn sub_assign(&mut self, rhs: GQuat<T>) {
+    fn sub_assign(&mut self, rhs: GRot3<T>) {
         *self = self.sub(rhs);
     }
 }
 
-impl<T: Real + Sub<Output = T>> SubAssign<&GQuat<T>> for GQuat<T> {
+impl<T: Real + Sub<Output = T>> SubAssign<&GRot3<T>> for GRot3<T> {
     #[inline]
-    fn sub_assign(&mut self, rhs: &GQuat<T>) {
+    fn sub_assign(&mut self, rhs: &GRot3<T>) {
         self.sub_assign(*rhs);
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul for GQuat<T> {
+impl<T: Real + Mul<Output = T>> Mul for GRot3<T> {
     type Output = Self;
-    /// Multiplies two quaternions. If they each represent a rotation, the result will
+    /// Multiplies two 3D rotations. If they are both normalized, the result will
     /// represent the combined rotation.
     ///
     /// Note that due to floating point rounding, the result may not be perfectly normalized.
     /// Consider normalizing the result after several successive multiplications.
     #[inline]
-    fn mul(self, rhs: GQuat<T>) -> Self {
-        self.mul_quat(rhs)
+    fn mul(self, rhs: GRot3<T>) -> Self {
+        self.mul_rot3(rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<&GQuat<T>> for GQuat<T> {
+impl<T: Real + Mul<Output = T>> Mul<&GRot3<T>> for GRot3<T> {
     type Output = Self;
     #[inline]
-    fn mul(self, rhs: &GQuat<T>) -> Self {
+    fn mul(self, rhs: &GRot3<T>) -> Self {
         self.mul(*rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<GQuat<T>> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Mul<Output = T>> Mul<GRot3<T>> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn mul(self, rhs: GQuat<T>) -> GQuat<T> {
+    fn mul(self, rhs: GRot3<T>) -> GRot3<T> {
         (*self).mul(rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<&GQuat<T>> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Mul<Output = T>> Mul<&GRot3<T>> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn mul(self, rhs: &GQuat<T>) -> GQuat<T> {
+    fn mul(self, rhs: &GRot3<T>) -> GRot3<T> {
         (*self).mul(*rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> MulAssign for GQuat<T> {
+impl<T: Real + Mul<Output = T>> MulAssign for GRot3<T> {
     #[inline]
-    fn mul_assign(&mut self, rhs: GQuat<T>) {
+    fn mul_assign(&mut self, rhs: GRot3<T>) {
         *self = self.mul(rhs);
     }
 }
 
-impl<T: Real + Mul<Output = T>> MulAssign<&GQuat<T>> for GQuat<T> {
+impl<T: Real + Mul<Output = T>> MulAssign<&GRot3<T>> for GRot3<T> {
     #[inline]
-    fn mul_assign(&mut self, rhs: &GQuat<T>) {
+    fn mul_assign(&mut self, rhs: &GRot3<T>) {
         self.mul_assign(*rhs);
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<T> for GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Mul<Output = T>> Mul<T> for GRot3<T> {
+    type Output = GRot3<T>;
     /// Multiplies a quaternion by a scalar value.
     ///
     /// The product is not guaranteed to be normalized.
     #[inline]
-    fn mul(self, rhs: T) -> GQuat<T> {
+    fn mul(self, rhs: T) -> GRot3<T> {
         Self::from_vec4(GVec4::from(self) * rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<&T> for GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Mul<Output = T>> Mul<&T> for GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn mul(self, rhs: &T) -> GQuat<T> {
+    fn mul(self, rhs: &T) -> GRot3<T> {
         self.mul(*rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<T> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Mul<Output = T>> Mul<T> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn mul(self, rhs: T) -> GQuat<T> {
+    fn mul(self, rhs: T) -> GRot3<T> {
         (*self).mul(rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<&T> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Mul<Output = T>> Mul<&T> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn mul(self, rhs: &T) -> GQuat<T> {
+    fn mul(self, rhs: &T) -> GRot3<T> {
         (*self).mul(*rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> MulAssign<T> for GQuat<T> {
+impl<T: Real + Mul<Output = T>> MulAssign<T> for GRot3<T> {
     #[inline]
     fn mul_assign(&mut self, rhs: T) {
         *self = self.mul(rhs);
     }
 }
 
-impl<T: Real + Mul<Output = T>> MulAssign<&T> for GQuat<T> {
+impl<T: Real + Mul<Output = T>> MulAssign<&T> for GRot3<T> {
     #[inline]
     fn mul_assign(&mut self, rhs: &T) {
         self.mul_assign(*rhs);
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<GVec3<T>> for GQuat<T> {
+impl<T: Real + Mul<Output = T>> Mul<GVec3<T>> for GRot3<T> {
     type Output = GVec3<T>;
-    /// Multiplies a quaternion and a 3D vector, returning the rotated vector.
+    /// Multiplies a 3D rotation and a 3D vector, returning the rotated vector.
     #[inline]
     fn mul(self, rhs: GVec3<T>) -> GVec3<T> {
         self.mul_vec3(rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<&GVec3<T>> for GQuat<T> {
+impl<T: Real + Mul<Output = T>> Mul<&GVec3<T>> for GRot3<T> {
     type Output = GVec3<T>;
     #[inline]
     fn mul(self, rhs: &GVec3<T>) -> GVec3<T> {
@@ -1135,7 +1153,7 @@ impl<T: Real + Mul<Output = T>> Mul<&GVec3<T>> for GQuat<T> {
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<GVec3<T>> for &GQuat<T> {
+impl<T: Real + Mul<Output = T>> Mul<GVec3<T>> for &GRot3<T> {
     type Output = GVec3<T>;
     #[inline]
     fn mul(self, rhs: GVec3<T>) -> GVec3<T> {
@@ -1143,7 +1161,7 @@ impl<T: Real + Mul<Output = T>> Mul<GVec3<T>> for &GQuat<T> {
     }
 }
 
-impl<T: Real + Mul<Output = T>> Mul<&GVec3<T>> for &GQuat<T> {
+impl<T: Real + Mul<Output = T>> Mul<&GVec3<T>> for &GRot3<T> {
     type Output = GVec3<T>;
     #[inline]
     fn mul(self, rhs: &GVec3<T>) -> GVec3<T> {
@@ -1151,7 +1169,7 @@ impl<T: Real + Mul<Output = T>> Mul<&GVec3<T>> for &GQuat<T> {
     }
 }
 
-impl<T: Real + Div<Output = T>> Div<T> for GQuat<T> {
+impl<T: Real + Div<Output = T>> Div<T> for GRot3<T> {
     type Output = Self;
     /// Divides a quaternion by a scalar value.
     ///
@@ -1162,7 +1180,7 @@ impl<T: Real + Div<Output = T>> Div<T> for GQuat<T> {
     }
 }
 
-impl<T: Real + Div<Output = T>> Div<&T> for GQuat<T> {
+impl<T: Real + Div<Output = T>> Div<&T> for GRot3<T> {
     type Output = Self;
     #[inline]
     fn div(self, rhs: &T) -> Self {
@@ -1170,37 +1188,37 @@ impl<T: Real + Div<Output = T>> Div<&T> for GQuat<T> {
     }
 }
 
-impl<T: Real + Div<Output = T>> Div<T> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Div<Output = T>> Div<T> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn div(self, rhs: T) -> GQuat<T> {
+    fn div(self, rhs: T) -> GRot3<T> {
         (*self).div(rhs)
     }
 }
 
-impl<T: Real + Div<Output = T>> Div<&T> for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real + Div<Output = T>> Div<&T> for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn div(self, rhs: &T) -> GQuat<T> {
+    fn div(self, rhs: &T) -> GRot3<T> {
         (*self).div(*rhs)
     }
 }
 
-impl<T: Real + Div<Output = T>> DivAssign<T> for GQuat<T> {
+impl<T: Real + Div<Output = T>> DivAssign<T> for GRot3<T> {
     #[inline]
     fn div_assign(&mut self, rhs: T) {
         *self = self.div(rhs);
     }
 }
 
-impl<T: Real + Div<Output = T>> DivAssign<&T> for GQuat<T> {
+impl<T: Real + Div<Output = T>> DivAssign<&T> for GRot3<T> {
     #[inline]
     fn div_assign(&mut self, rhs: &T) {
         self.div_assign(*rhs);
     }
 }
 
-impl<T: Real> Neg for GQuat<T> {
+impl<T: Real> Neg for GRot3<T> {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self {
@@ -1208,15 +1226,15 @@ impl<T: Real> Neg for GQuat<T> {
     }
 }
 
-impl<T: Real> Neg for &GQuat<T> {
-    type Output = GQuat<T>;
+impl<T: Real> Neg for &GRot3<T> {
+    type Output = GRot3<T>;
     #[inline]
-    fn neg(self) -> GQuat<T> {
+    fn neg(self) -> GRot3<T> {
         (*self).neg()
     }
 }
 
-impl<T: Real> Sum<GQuat<T>> for GQuat<T> {
+impl<T: Real> Sum<GRot3<T>> for GRot3<T> {
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
@@ -1225,7 +1243,7 @@ impl<T: Real> Sum<GQuat<T>> for GQuat<T> {
     }
 }
 
-impl<'a, T: Real> Sum<&'a GQuat<T>> for GQuat<T> {
+impl<'a, T: Real> Sum<&'a GRot3<T>> for GRot3<T> {
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
@@ -1234,7 +1252,7 @@ impl<'a, T: Real> Sum<&'a GQuat<T>> for GQuat<T> {
     }
 }
 
-impl<T: Real> Product<GQuat<T>> for GQuat<T> {
+impl<T: Real> Product<GRot3<T>> for GRot3<T> {
     fn product<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
@@ -1243,7 +1261,7 @@ impl<T: Real> Product<GQuat<T>> for GQuat<T> {
     }
 }
 
-impl<'a, T: Real> Product<&'a GQuat<T>> for GQuat<T> {
+impl<'a, T: Real> Product<&'a GRot3<T>> for GRot3<T> {
     fn product<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
@@ -1252,56 +1270,56 @@ impl<'a, T: Real> Product<&'a GQuat<T>> for GQuat<T> {
     }
 }
 
-impl<T: Real> From<GQuat<T>> for GVec4<T> {
+impl<T: Real> From<GRot3<T>> for GVec4<T> {
     #[inline]
-    fn from(v: GQuat<T>) -> Self {
+    fn from(v: GRot3<T>) -> Self {
         GVec4::new(v.x, v.y, v.z, v.w)
     }
 }
 
-impl<T: Real> From<[T; 4]> for GQuat<T> {
+impl<T: Real> From<[T; 4]> for GRot3<T> {
     #[inline]
     fn from(comps: [T; 4]) -> Self {
         Self::from_xyzw(comps[0], comps[1], comps[2], comps[3])
     }
 }
 
-impl<T: Real> From<GQuat<T>> for [T; 4] {
+impl<T: Real> From<GRot3<T>> for [T; 4] {
     #[inline]
-    fn from(v: GQuat<T>) -> Self {
+    fn from(v: GRot3<T>) -> Self {
         [v.x, v.y, v.z, v.w]
     }
 }
 
-impl<T: Real> From<(T, T, T, T)> for GQuat<T> {
+impl<T: Real> From<(T, T, T, T)> for GRot3<T> {
     #[inline]
     fn from(comps: (T, T, T, T)) -> Self {
         Self::from_xyzw(comps.0, comps.1, comps.2, comps.3)
     }
 }
 
-impl<T: Real> From<GQuat<T>> for (T, T, T, T) {
+impl<T: Real> From<GRot3<T>> for (T, T, T, T) {
     #[inline]
-    fn from(v: GQuat<T>) -> Self {
+    fn from(v: GRot3<T>) -> Self {
         (v.x, v.y, v.z, v.w)
     }
 }
 
-impl<T: Real> AsRef<[T; 4]> for GQuat<T> {
+impl<T: Real> AsRef<[T; 4]> for GRot3<T> {
     #[inline]
     fn as_ref(&self) -> &[T; 4] {
-        unsafe { &*(self as *const GQuat<T> as *const [T; 4]) }
+        unsafe { &*(self as *const GRot3<T> as *const [T; 4]) }
     }
 }
 
-impl<T: Real> AsMut<[T; 4]> for GQuat<T> {
+impl<T: Real> AsMut<[T; 4]> for GRot3<T> {
     #[inline]
     fn as_mut(&mut self) -> &mut [T; 4] {
-        unsafe { &mut *(self as *mut GQuat<T> as *mut [T; 4]) }
+        unsafe { &mut *(self as *mut GRot3<T> as *mut [T; 4]) }
     }
 }
 
-impl<T: Real + core::fmt::Display> core::fmt::Display for GQuat<T> {
+impl<T: Real + core::fmt::Display> core::fmt::Display for GRot3<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(p) = f.precision() {
             write!(
@@ -1315,9 +1333,9 @@ impl<T: Real + core::fmt::Display> core::fmt::Display for GQuat<T> {
     }
 }
 
-impl<T: Real + core::fmt::Debug> core::fmt::Debug for GQuat<T> {
+impl<T: Real + core::fmt::Debug> core::fmt::Debug for GRot3<T> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        fmt.debug_tuple(stringify!(Quat))
+        fmt.debug_tuple(stringify!(Rot3))
             .field(&self.x)
             .field(&self.y)
             .field(&self.z)

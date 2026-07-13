@@ -1,4 +1,4 @@
-use crate::rotation::GQuat;
+use crate::rotation::GRot3;
 use crate::vector::{GVec2, GVec4, Vec4Swizzles};
 
 use core::{
@@ -876,7 +876,7 @@ impl<T: Real> GVec3<T> {
     #[inline]
     #[must_use]
     pub fn rotate_axis(self, axis: Self, angle: T) -> Self {
-        GQuat::from_axis_angle(axis, angle) * self
+        GRot3::from_axis_angle(axis, angle) * self
     }
 }
 
@@ -991,7 +991,7 @@ impl<T: Float> GVec3<T> {
         let axis = self
             .cross(rhs)
             .normalize_or(self.any_orthogonal_vector().normalize());
-        GQuat::from_axis_angle(axis, angle) * self
+        GRot3::from_axis_angle(axis, angle) * self
     }
 
     /// Returns some vector that is orthogonal to the given one.
@@ -1097,7 +1097,7 @@ impl<T: ScalarFloat> GVec3<T> {
 
             // Create a rotation from self to rhs along some axis
             let axis = self.any_orthogonal_vector().normalize();
-            let rotation = GQuat::from_axis_angle(axis, T::PI * s);
+            let rotation = GRot3::from_axis_angle(axis, T::PI * s);
             // Interpolate vector lengths
             let result_length = self_length + (rhs_length - self_length) * s;
             rotation * self * (result_length / self_length)
