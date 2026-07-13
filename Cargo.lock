@@ -108,14 +108,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "gglam"
+name = "gela"
 version = "0.1.0"
 dependencies = [
  "approx",
  "arbitrary",
  "bytemuck",
  "encase",
- "gglam",
+ "gela",
  "gnum",
  "libm",
  "mint",
