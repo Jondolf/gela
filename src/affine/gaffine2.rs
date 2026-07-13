@@ -1,4 +1,5 @@
 use crate::matrix::{GMat2, GMat3};
+use crate::rotation::GRot2;
 use crate::vector::{GVec2, Vec3Swizzles};
 
 use core::{iter::Product, ops::*};
@@ -150,12 +151,12 @@ impl<T: Real> GAffine2<T> {
         }
     }
 
-    /// Creates an affine transform from the given rotation `angle`.
+    /// Creates an affine transform from the given `rotation`.
     #[inline]
     #[must_use]
-    pub fn from_angle(angle: T) -> Self {
+    pub fn from_rotation(rotation: GRot2<T>) -> Self {
         Self {
-            matrix2: GMat2::from_angle(angle),
+            matrix2: GMat2::from_rotation(rotation),
             translation: GVec2::ZERO,
         }
     }
@@ -193,27 +194,32 @@ impl<T: Real> GAffine2<T> {
         }
     }
 
-    /// Creates an affine transform from the given 2D `scale`, rotation `angle` (in radians) and `translation`.
+    /// Creates an affine transform from the given 2D `scale`, `rotation`, and `translation`.
     ///
-    /// Equivalent to `GAffine2::from_translation(translation) * GAffine2::from_angle(angle) * GAffine2::from_scale(scale)`.
+    /// Equivalent to `GAffine2::from_translation(translation) *
+    /// GAffine2::from_rotation(rotation) * GAffine2::from_scale(scale)`.
     #[inline]
     #[must_use]
-    pub fn from_scale_angle_translation(scale: GVec2<T>, angle: T, translation: GVec2<T>) -> Self {
-        let rotation = GMat2::from_angle(angle);
+    pub fn from_scale_rotation_translation(
+        scale: GVec2<T>,
+        rotation: GRot2<T>,
+        translation: GVec2<T>,
+    ) -> Self {
+        let rotation = GMat2::from_rotation(rotation);
         Self {
             matrix2: GMat2::from_cols(rotation.x_axis * scale.x, rotation.y_axis * scale.y),
             translation,
         }
     }
 
-    /// Creates an affine transform from the given 2D rotation `angle` (in radians) and `translation`.
+    /// Creates an affine transform from the given 2D `rotation` and `translation`.
     ///
-    /// Equivalent to `GAffine2::from_translation(translation) * GAffine2::from_angle(angle)`.
+    /// Equivalent to `GAffine2::from_translation(translation) * GAffine2::from_rotation(rotation)`.
     #[inline]
     #[must_use]
-    pub fn from_angle_translation(angle: T, translation: GVec2<T>) -> Self {
+    pub fn from_rotation_translation(rotation: GRot2<T>, translation: GVec2<T>) -> Self {
         Self {
-            matrix2: GMat2::from_angle(angle),
+            matrix2: GMat2::from_rotation(rotation),
             translation,
         }
     }
@@ -228,13 +234,13 @@ impl<T: Real> GAffine2<T> {
         }
     }
 
-    /// Extracts `scale`, `angle` and `translation` from `self`.
+    /// Extracts `scale`, `rotation` and `translation` from `self`.
     ///
     /// The transform is expected to be non-degenerate and without shearing, or the output
     /// will be invalid.
     #[inline]
     #[must_use]
-    pub fn to_scale_angle_translation(&self) -> (GVec2<T>, T, GVec2<T>) {
+    pub fn to_scale_rotation_translation(&self) -> (GVec2<T>, GRot2<T>, GVec2<T>) {
         let det = self.matrix2.determinant();
 
         let scale = GVec2::new(
@@ -242,9 +248,11 @@ impl<T: Real> GAffine2<T> {
             self.matrix2.y_axis.length(),
         );
 
-        let angle = (-self.matrix2.y_axis.x).atan2(self.matrix2.y_axis.y);
+        let cos = self.matrix2.x_axis.x / scale.x;
+        let sin = self.matrix2.x_axis.y / scale.x;
+        let rotation = GRot2::from_cos_sin(cos, sin);
 
-        (scale, angle, self.translation)
+        (scale, rotation, self.translation)
     }
 }
 

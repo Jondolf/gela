@@ -388,7 +388,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn from_axis_angle(axis: GVec3<T>, angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+        let (sin, cos) = angle.sin_cos_stable();
         let axis_sin = axis.mul(sin);
         let axis_sq = axis.mul(axis);
         let omc = T::ONE - cos;
@@ -447,7 +447,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_x(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::from_cols(
             GVec4::X,
             GVec4::new(T::ZERO, cosa, sina, T::ZERO),
@@ -464,7 +464,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_y(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::from_cols(
             GVec4::new(cosa, T::ZERO, -sina, T::ZERO),
             GVec4::Y,
@@ -481,7 +481,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_z(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::from_cols(
             GVec4::new(cosa, sina, T::ZERO, T::ZERO),
             GVec4::new(-sina, cosa, T::ZERO, T::ZERO),
@@ -883,7 +883,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn perspective_lh(fov_y_radians: T, aspect_ratio: T, z_near: T, z_far: T) -> Self {
-        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos();
+        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos_stable();
         let h = cos_fov / sin_fov;
         let w = h / aspect_ratio;
         let r = z_far / (z_far - z_near);
@@ -901,7 +901,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn perspective_rh(fov_y_radians: T, aspect_ratio: T, z_near: T, z_far: T) -> Self {
-        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos();
+        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos_stable();
         let h = cos_fov / sin_fov;
         let w = h / aspect_ratio;
         let r = z_far / (z_near - z_far);
@@ -920,7 +920,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn perspective_infinite_lh(fov_y_radians: T, aspect_ratio: T, z_near: T) -> Self {
-        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos();
+        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos_stable();
         let h = cos_fov / sin_fov;
         let w = h / aspect_ratio;
         Self::from_cols(
@@ -937,7 +937,7 @@ impl<T: Real> GMat4<T> {
     #[inline]
     #[must_use]
     pub fn perspective_infinite_reverse_lh(fov_y_radians: T, aspect_ratio: T, z_near: T) -> Self {
-        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos();
+        let (sin_fov, cos_fov) = (T::HALF * fov_y_radians).sin_cos_stable();
         let h = cos_fov / sin_fov;
         let w = h / aspect_ratio;
         Self::from_cols(

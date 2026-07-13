@@ -225,9 +225,9 @@ impl<T: ScalarReal> FromEuler for GMat3<T> {
             angles = -angles;
         }
 
-        let (si, ci) = angles.x.sin_cos();
-        let (sj, cj) = angles.y.sin_cos();
-        let (sh, ch) = angles.z.sin_cos();
+        let (si, ci) = angles.x.sin_cos_stable();
+        let (sj, cj) = angles.y.sin_cos_stable();
+        let (sh, ch) = angles.z.sin_cos_stable();
 
         let cc = ci * ch;
         let cs = ci * sh;
@@ -288,9 +288,9 @@ impl<T: ScalarReal> FromEuler for GQuat<T> {
         let ti = angles.x * T::HALF;
         let tj = angles.y * T::HALF;
         let th = angles.z * T::HALF;
-        let (si, ci) = ti.sin_cos();
-        let (sj, cj) = tj.sin_cos();
-        let (sh, ch) = th.sin_cos();
+        let (si, ci) = ti.sin_cos_stable();
+        let (sj, cj) = tj.sin_cos_stable();
+        let (sh, ch) = th.sin_cos_stable();
         let cc = ci * ch;
         let cs = ci * sh;
         let sc = si * ch;
@@ -330,22 +330,22 @@ impl<T: ScalarReal> ToEuler for GMat3<T> {
         if order.initial_repeated {
             let sy = (self.col(i)[j] * self.col(i)[j] + self.col(i)[k] * self.col(i)[k]).sqrt();
             if sy > T::from_f32(16.0 * f32::EPSILON) {
-                ea.x = self.col(i)[j].atan2(self.col(i)[k]);
-                ea.y = sy.atan2(self.col(i)[i]);
-                ea.z = self.col(j)[i].atan2(-self.col(k)[i]);
+                ea.x = self.col(i)[j].atan2_stable(self.col(i)[k]);
+                ea.y = sy.atan2_stable(self.col(i)[i]);
+                ea.z = self.col(j)[i].atan2_stable(-self.col(k)[i]);
             } else {
-                ea.x = (-self.col(j)[k]).atan2(self.col(j)[j]);
-                ea.y = sy.atan2(self.col(i)[i]);
+                ea.x = (-self.col(j)[k]).atan2_stable(self.col(j)[j]);
+                ea.y = sy.atan2_stable(self.col(i)[i]);
             }
         } else {
             let cy = (self.col(i)[i] * self.col(i)[i] + self.col(j)[i] * self.col(j)[i]).sqrt();
             if cy > T::from_f32(16.0 * f32::EPSILON) {
-                ea.x = self.col(k)[j].atan2(self.col(k)[k]);
-                ea.y = (-self.col(k)[i]).atan2(cy);
-                ea.z = self.col(j)[i].atan2(self.col(i)[i]);
+                ea.x = self.col(k)[j].atan2_stable(self.col(k)[k]);
+                ea.y = (-self.col(k)[i]).atan2_stable(cy);
+                ea.z = self.col(j)[i].atan2_stable(self.col(i)[i]);
             } else {
-                ea.x = (-self.col(j)[k]).atan2(self.col(j)[j]);
-                ea.y = (-self.col(k)[i]).atan2(cy);
+                ea.x = (-self.col(j)[k]).atan2_stable(self.col(j)[j]);
+                ea.y = (-self.col(k)[i]).atan2_stable(cy);
             }
         }
 

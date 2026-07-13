@@ -250,7 +250,7 @@ impl<T: Real> GMat3<T> {
     #[inline]
     #[must_use]
     pub fn from_axis_angle(axis: GVec3<T>, angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+        let (sin, cos) = angle.sin_cos_stable();
         let (xsin, ysin, zsin) = axis.mul(sin).into();
         let (x, y, z) = axis.into();
         let (x2, y2, z2) = axis.mul(axis).into();
@@ -290,7 +290,7 @@ impl<T: Real> GMat3<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_x(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::from_cols(
             GVec3::X,
             GVec3::new(T::ZERO, cosa, sina),
@@ -302,7 +302,7 @@ impl<T: Real> GMat3<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_y(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::from_cols(
             GVec3::new(cosa, T::ZERO, -sina),
             GVec3::Y,
@@ -314,7 +314,7 @@ impl<T: Real> GMat3<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_z(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::from_cols(
             GVec3::new(cosa, sina, T::ZERO),
             GVec3::new(-sina, cosa, T::ZERO),
@@ -344,7 +344,7 @@ impl<T: Real> GMat3<T> {
     #[inline]
     #[must_use]
     pub fn from_angle(angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+        let (sin, cos) = angle.sin_cos_stable();
         Self::from_cols(
             GVec3::new(cos, sin, T::ZERO),
             GVec3::new(-sin, cos, T::ZERO),
@@ -360,7 +360,7 @@ impl<T: Real> GMat3<T> {
     #[inline]
     #[must_use]
     pub fn from_scale_angle_translation(scale: GVec2<T>, angle: T, translation: GVec2<T>) -> Self {
-        let (sin, cos) = angle.sin_cos();
+        let (sin, cos) = angle.sin_cos_stable();
         Self::from_cols(
             GVec3::new(cos * scale.x, sin * scale.x, T::ZERO),
             GVec3::new(-sin * scale.y, cos * scale.y, T::ZERO),

@@ -715,23 +715,31 @@ impl<T: Real> GVec3<T> {
     #[inline]
     #[must_use]
     pub fn cos(self) -> Self {
-        Self::new(self.x.cos(), self.y.cos(), self.z.cos())
+        Self::new(
+            self.x.cos_stable(),
+            self.y.cos_stable(),
+            self.z.cos_stable(),
+        )
     }
 
     /// Returns a vector containing the sine for each element of `self`.
     #[inline]
     #[must_use]
     pub fn sin(self) -> Self {
-        Self::new(self.x.sin(), self.y.sin(), self.z.sin())
+        Self::new(
+            self.x.sin_stable(),
+            self.y.sin_stable(),
+            self.z.sin_stable(),
+        )
     }
 
     /// Returns a tuple of two vectors containing the sine and cosine for each element of `self`.
     #[inline]
     #[must_use]
     pub fn sin_cos(self) -> (Self, Self) {
-        let (sin_x, cos_x) = self.x.sin_cos();
-        let (sin_y, cos_y) = self.y.sin_cos();
-        let (sin_z, cos_z) = self.z.sin_cos();
+        let (sin_x, cos_x) = self.x.sin_cos_stable();
+        let (sin_y, cos_y) = self.y.sin_cos_stable();
+        let (sin_z, cos_z) = self.z.sin_cos_stable();
 
         (
             Self::new(sin_x, sin_y, sin_z),
@@ -823,14 +831,14 @@ impl<T: Real> GVec3<T> {
     pub fn angle_between(self, rhs: Self) -> T {
         let dot = self.dot(rhs) / (self.length_squared() * rhs.length_squared()).sqrt();
         // TODO: Glam uses a custom acos approximation here. It would probably be faster?
-        dot.clamp(T::NEG_ONE, T::ONE).acos()
+        dot.clamp(T::NEG_ONE, T::ONE).acos_stable()
     }
 
     /// Rotates around the x axis by `angle` (in radians).
     #[inline]
     #[must_use]
     pub fn rotate_x(self, angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::new(
             self.x,
             self.y * cosa - self.z * sina,
@@ -842,7 +850,7 @@ impl<T: Real> GVec3<T> {
     #[inline]
     #[must_use]
     pub fn rotate_y(self, angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::new(
             self.x * cosa + self.z * sina,
             self.y,
@@ -854,7 +862,7 @@ impl<T: Real> GVec3<T> {
     #[inline]
     #[must_use]
     pub fn rotate_z(self, angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos();
+        let (sina, cosa) = angle.sin_cos_stable();
         Self::new(
             self.x * cosa - self.y * sina,
             self.x * sina + self.y * cosa,
@@ -948,7 +956,11 @@ impl<T: Float> GVec3<T> {
     #[inline]
     #[must_use]
     pub fn powf(self, n: T) -> Self {
-        Self::new(self.x.powf(n), self.y.powf(n), self.z.powf(n))
+        Self::new(
+            self.x.powf_stable(n),
+            self.y.powf_stable(n),
+            self.z.powf_stable(n),
+        )
     }
 
     /// Moves towards `rhs` based on the value `d`.
@@ -1067,11 +1079,11 @@ impl<T: ScalarFloat> GVec3<T> {
         if dot.abs() < T::ONE - T::EPSILON {
             // Angle between the vectors [0, +π]
             // TODO: Glam uses a custom acos approximation here. It would probably be faster?
-            let theta = dot.clamp(T::NEG_ONE, T::ONE).acos();
+            let theta = dot.clamp(T::NEG_ONE, T::ONE).acos_stable();
             // Sine of the angle between vectors [0, 1]
-            let sin_theta = theta.sin();
-            let t1 = (theta * (T::ONE - s)).sin();
-            let t2 = (theta * s).sin();
+            let sin_theta = theta.sin_stable();
+            let t1 = (theta * (T::ONE - s)).sin_stable();
+            let t2 = (theta * s).sin_stable();
 
             // Interpolate vector lengths
             let result_length = self_length + (rhs_length - self_length) * s;

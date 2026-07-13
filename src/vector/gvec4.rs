@@ -751,24 +751,34 @@ impl<T: Real> GVec4<T> {
     #[inline]
     #[must_use]
     pub fn cos(self) -> Self {
-        Self::new(self.x.cos(), self.y.cos(), self.z.cos(), self.w.cos())
+        Self::new(
+            self.x.cos_stable(),
+            self.y.cos_stable(),
+            self.z.cos_stable(),
+            self.w.cos_stable(),
+        )
     }
 
     /// Returns a vector containing the sine for each element of `self`.
     #[inline]
     #[must_use]
     pub fn sin(self) -> Self {
-        Self::new(self.x.sin(), self.y.sin(), self.z.sin(), self.w.sin())
+        Self::new(
+            self.x.sin_stable(),
+            self.y.sin_stable(),
+            self.z.sin_stable(),
+            self.w.sin_stable(),
+        )
     }
 
     /// Returns a tuple of two vectors containing the sine and cosine for each element of `self`.
     #[inline]
     #[must_use]
     pub fn sin_cos(self) -> (Self, Self) {
-        let (sin_x, cos_x) = self.x.sin_cos();
-        let (sin_y, cos_y) = self.y.sin_cos();
-        let (sin_z, cos_z) = self.z.sin_cos();
-        let (sin_w, cos_w) = self.w.sin_cos();
+        let (sin_x, cos_x) = self.x.sin_cos_stable();
+        let (sin_y, cos_y) = self.y.sin_cos_stable();
+        let (sin_z, cos_z) = self.z.sin_cos_stable();
+        let (sin_w, cos_w) = self.w.sin_cos_stable();
 
         (
             Self::new(sin_x, sin_y, sin_z, sin_w),
@@ -946,10 +956,10 @@ impl<T: Float> GVec4<T> {
     #[must_use]
     pub fn powf(self, n: T) -> Self {
         Self::new(
-            self.x.powf(n),
-            self.y.powf(n),
-            self.z.powf(n),
-            self.w.powf(n),
+            self.x.powf_stable(n),
+            self.y.powf_stable(n),
+            self.z.powf_stable(n),
+            self.w.powf_stable(n),
         )
     }
 

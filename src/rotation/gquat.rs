@@ -163,7 +163,7 @@ impl<T: Real> GQuat<T> {
     #[inline]
     #[must_use]
     pub fn from_axis_angle(axis: GVec3<T>, angle: T) -> Self {
-        let (s, c) = (angle * T::HALF).sin_cos();
+        let (s, c) = (angle * T::HALF).sin_cos_stable();
         let v = axis * s;
         Self::from_xyzw(v.x, v.y, v.z, c)
     }
@@ -184,7 +184,7 @@ impl<T: Real> GQuat<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_x(angle: T) -> Self {
-        let (s, c) = (angle * T::HALF).sin_cos();
+        let (s, c) = (angle * T::HALF).sin_cos_stable();
         Self::from_xyzw(s, T::ZERO, T::ZERO, c)
     }
 
@@ -192,7 +192,7 @@ impl<T: Real> GQuat<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_y(angle: T) -> Self {
-        let (s, c) = (angle * T::HALF).sin_cos();
+        let (s, c) = (angle * T::HALF).sin_cos_stable();
         Self::from_xyzw(T::ZERO, s, T::ZERO, c)
     }
 
@@ -200,7 +200,7 @@ impl<T: Real> GQuat<T> {
     #[inline]
     #[must_use]
     pub fn from_rotation_z(angle: T) -> Self {
-        let (s, c) = (angle * T::HALF).sin_cos();
+        let (s, c) = (angle * T::HALF).sin_cos_stable();
         Self::from_xyzw(T::ZERO, T::ZERO, s, c)
     }
 
@@ -525,7 +525,7 @@ impl<T: Real> GQuat<T> {
         let length = v.length();
         let is_non_zero = length.num_ge(epsilon);
 
-        let angle = T::from_f32(2.0) * length.atan2(self.w);
+        let angle = T::from_f32(2.0) * length.atan2_stable(self.w);
         let axis = v / length;
 
         (
@@ -651,11 +651,11 @@ impl<T: Real> GQuat<T> {
         // Based on https://github.com/nfrechette/rtm `rtm::quat_near_identity`
         // Because of floating point precision, we cannot represent very small rotations.
         // The closest f32 to 1.0 that is not 1.0 itself yields:
-        // 0.99999994.acos() * 2.0  = 0.000690533954 rad
+        // 0.99999994.acos_stable() * 2.0  = 0.000690533954 rad
         //
         // An error threshold of 1.e-6 is used by default.
-        // (1.0 - 1.e-6).acos() * 2.0 = 0.00284714461 rad
-        // (1.0 - 1.e-7).acos() * 2.0 = 0.00097656250 rad
+        // (1.0 - 1.e-6).acos_stable() * 2.0 = 0.00284714461 rad
+        // (1.0 - 1.e-7).acos_stable() * 2.0 = 0.00097656250 rad
         //
         // We don't really care about the angle value itself, only if it's close to 0.
         // This will happen whenever quat.w is close to 1.0.
@@ -663,9 +663,9 @@ impl<T: Real> GQuat<T> {
         // a negative 0 rotation. By forcing quat.w to be positive, we'll end up with
         // the shortest path.
         //
-        // TODO: For f64, use a threshold of (1.0 - 1e-14).acos() * 2.0
+        // TODO: For f64, use a threshold of (1.0 - 1e-14).acos_stable() * 2.0
         let threshold_angle = T::from_f32(0.002_847_144_6);
-        let positive_w_angle = self.w.abs().min(T::ONE).acos() * (T::ONE + T::ONE);
+        let positive_w_angle = self.w.abs().min(T::ONE).acos_stable() * (T::ONE + T::ONE);
         positive_w_angle.num_lt(threshold_angle)
     }
 
@@ -676,7 +676,7 @@ impl<T: Real> GQuat<T> {
     #[inline]
     #[must_use]
     pub fn angle_between(self, rhs: Self) -> T {
-        self.dot(rhs).abs().min(T::ONE).acos() * (T::ONE + T::ONE)
+        self.dot(rhs).abs().min(T::ONE).acos_stable() * (T::ONE + T::ONE)
     }
 
     /// Rotates towards `rhs` up to `max_angle` (in radians).
@@ -758,11 +758,11 @@ impl<T: Real> GQuat<T> {
         let lerp = self.lerp_impl(end, s);
 
         // Slerp
-        let theta = dot.min(T::ONE).acos();
+        let theta = dot.min(T::ONE).acos_stable();
 
-        let scale1 = (theta * (T::ONE - s)).sin();
-        let scale2 = (theta * s).sin();
-        let theta_sin = theta.sin();
+        let scale1 = (theta * (T::ONE - s)).sin_stable();
+        let scale2 = (theta * s).sin_stable();
+        let theta_sin = theta.sin_stable();
         let slerp = ((self * scale1) + (end * scale2)) * (T::ONE / theta_sin);
 
         Self::select(use_linear, lerp, slerp)

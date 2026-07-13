@@ -161,7 +161,7 @@ impl<T: Real> GRot2<T> {
     #[inline]
     #[must_use]
     pub fn from_radians(angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+        let (sin, cos) = angle.sin_cos_stable();
         Self::from_cos_sin(cos, sin)
     }
 
@@ -169,7 +169,7 @@ impl<T: Real> GRot2<T> {
     #[inline]
     #[must_use]
     pub fn from_degrees(angle: T) -> Self {
-        let (sin, cos) = angle.to_radians().sin_cos();
+        let (sin, cos) = angle.to_radians().sin_cos_stable();
         Self::from_cos_sin(cos, sin)
     }
 
@@ -187,7 +187,7 @@ impl<T: Real> GRot2<T> {
     #[inline]
     #[must_use]
     pub fn to_radians(self) -> T {
-        self.sin.atan2(self.cos)
+        self.sin.atan2_stable(self.cos)
     }
 
     /// Returns the rotation angle of `self` in degrees.

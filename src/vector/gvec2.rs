@@ -651,22 +651,22 @@ impl<T: Real> GVec2<T> {
     #[inline]
     #[must_use]
     pub fn cos(self) -> Self {
-        Self::new(self.x.cos(), self.y.cos())
+        Self::new(self.x.cos_stable(), self.y.cos_stable())
     }
 
     /// Returns a vector containing the sine for each element of `self`.
     #[inline]
     #[must_use]
     pub fn sin(self) -> Self {
-        Self::new(self.x.sin(), self.y.sin())
+        Self::new(self.x.sin_stable(), self.y.sin_stable())
     }
 
     /// Returns a tuple of two vectors containing the sine and cosine for each element of `self`.
     #[inline]
     #[must_use]
     pub fn sin_cos(self) -> (Self, Self) {
-        let (sin_x, cos_x) = self.x.sin_cos();
-        let (sin_y, cos_y) = self.y.sin_cos();
+        let (sin_x, cos_x) = self.x.sin_cos_stable();
+        let (sin_y, cos_y) = self.y.sin_cos_stable();
 
         (Self::new(sin_x, sin_y), Self::new(cos_x, cos_y))
     }
@@ -743,7 +743,7 @@ impl<T: Real> GVec2<T> {
         Self::select(mask, Self::ZERO, out)
     }
 
-    /// Creates a 2D vector containing `[angle.cos(), angle.sin()]`.
+    /// Creates a 2D vector containing `[angle.cos_stable(), angle.sin_stable()]`.
     ///
     /// This can be used in conjunction with the [`rotate`][Self::rotate()] method,
     /// for example `GVec2::from_angle(PI).rotate(GVec2::Y)` will create the vector `[-1, 0]`
@@ -751,7 +751,7 @@ impl<T: Real> GVec2<T> {
     #[inline]
     #[must_use]
     pub fn from_angle(angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+        let (sin, cos) = angle.sin_cos_stable();
         Self::new(cos, sin)
     }
 
@@ -761,7 +761,7 @@ impl<T: Real> GVec2<T> {
     #[inline]
     #[must_use]
     pub fn to_angle(self) -> T {
-        self.y.atan2(self.x)
+        self.y.atan2_stable(self.x)
     }
 
     /// Returns the angle of rotation (in radians) from `self` to `rhs` in the range `[-π, +π]`.
@@ -772,7 +772,7 @@ impl<T: Real> GVec2<T> {
     pub fn angle_to(self, rhs: Self) -> T {
         let dot = self.dot(rhs) / (self.length_squared() * rhs.length_squared()).sqrt();
         // TODO: Glam uses a custom acos approximation here. It would probably be faster?
-        let angle = dot.clamp(T::NEG_ONE, T::ONE).acos();
+        let angle = dot.clamp(T::NEG_ONE, T::ONE).acos_stable();
 
         angle * self.perp_dot(rhs).signum()
     }
@@ -887,7 +887,7 @@ impl<T: Float> GVec2<T> {
     #[inline]
     #[must_use]
     pub fn powf(self, n: T) -> Self {
-        Self::new(self.x.powf(n), self.y.powf(n))
+        Self::new(self.x.powf_stable(n), self.y.powf_stable(n))
     }
 
     /// Moves towards `rhs` based on the value `d`.

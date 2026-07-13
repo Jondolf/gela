@@ -1,4 +1,5 @@
 use crate::matrix::GMat3;
+use crate::rotation::GRot2;
 use crate::vector::{GVec2, Vec3Swizzles};
 
 use core::{
@@ -126,20 +127,19 @@ impl<T: Real> GMat2<T> {
         }
     }
 
-    /// Creates a 2x2 matrix containing the combining non-uniform `scale` and rotation of
-    /// `angle` (in radians).
+    /// Creates a 2x2 matrix containing a non-uniform `scale` and `rotation`.
     #[inline]
     #[must_use]
-    pub fn from_scale_angle(scale: GVec2<T>, angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+    pub fn from_scale_rotation(scale: GVec2<T>, rotation: GRot2<T>) -> Self {
+        let (sin, cos) = (rotation.sin, rotation.cos);
         Self::new(cos * scale.x, sin * scale.x, -sin * scale.y, cos * scale.y)
     }
 
-    /// Creates a 2x2 matrix containing a rotation of `angle` (in radians).
+    /// Creates a 2x2 matrix containing a `rotation`.
     #[inline]
     #[must_use]
-    pub fn from_angle(angle: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
+    pub fn from_rotation(rotation: GRot2<T>) -> Self {
+        let (sin, cos) = (rotation.sin, rotation.cos);
         Self::new(cos, sin, -sin, cos)
     }
 
