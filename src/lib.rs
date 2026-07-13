@@ -23,6 +23,7 @@ compile_error!(
 );
 
 pub mod affine;
+pub mod isometry;
 pub mod matrix;
 pub mod rotation;
 pub mod vector;
