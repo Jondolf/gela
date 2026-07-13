@@ -131,6 +131,7 @@ Let's take a look at a more complicated example.
 
 [SIMD]: https://en.wikipedia.org/wiki/Single_instruction,_multiple_data
 [`glam`]: https://github.com/bitshifter/glam-rs
+[`Vec3A`]: https://docs.rs/glam/latest/glam/f32/struct.Vec3A.html
 [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
 
 ### Example: Ray-Sphere Intersections
@@ -372,16 +373,18 @@ Whether or not this style of generic math suits you depends on the application.
 I originally built `gela` and `gnum` for my physics engine [Avian] in order to optimize
 the contact solver with wide SIMD. I had four major goals:
 
-1. Math code should look as close as possible to Rust math with concrete types,
-   with minimal use of trait bounds.
+1. Math code should look as close as possible to normal Rust math with concrete types,
+   with trivial trait bounds.
 2. SIMD code must be able to choose the optimal target, and be generic enough
-   to not require rewriting code for each target.
+   to not require writing code manually for each target or lane count.
 3. SIMD must work on both stable and nightly toolchains.
 4. Scalar and SIMD math must support cross-platform determinism and have methods
    that produce identical results for all relevant operations.
 
 No existing crate I found fulfilled all four of these. Many, _many_ iterations later,
 I ended up with `gela` and `gnum`. And for my needs, they fit the mold perfectly!
+
+[Avian]: https://github.com/avianphysics/avian
 
 ## Acknowledgments
 
