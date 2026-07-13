@@ -9,7 +9,7 @@ A generic linear algebra library for games and graphics.
 - Generic element types using `gnum`
 - Vectors: `GVec2`, `GVec3`, and `GVec4` (real numbers, integers, booleans)
 - Square matrices: `GMat2`, `GMat3`, `GMat4` (real numbers)
-- Rotations: `GRo2`, `GRot3` (real numbers)
+- Rotations: `GRot2`, `GRot3` (real numbers)
 - Isometries: `GIso2`, `GIso3` (real numbers)
 - Affine transformations: `GAffine2`, `GAffine3` (real numbers)
 - Ergonomic type aliases like `Vec3` (`f32`) and `DVec3` (`f64`)
