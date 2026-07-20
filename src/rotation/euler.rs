@@ -17,8 +17,8 @@ use crate::{
 /// orientation after each elemental rotation).
 ///
 /// ```
-/// # use gglam::matrix::GMat3;
-/// # use gglam::rotation::EulerRot;
+/// # use gela::matrix::GMat3;
+/// # use gela::rotation::EulerRot;
 /// # let i = core::f32::consts::FRAC_PI_2;
 /// # let j = core::f32::consts::FRAC_PI_4;
 /// # let k = core::f32::consts::FRAC_PI_8;

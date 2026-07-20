@@ -6,13 +6,10 @@ use core::{
     ops::*,
 };
 
+use gnum::num::ScalarFloat;
 use gnum::{
     cmp::{NumEq, NumOrd},
-    num::{
-        CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, DivEuclid, Float, Int, Num, Real,
-        RemEuclid, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingSub, ScalarFloat, Signed,
-        WrappingAdd, WrappingDiv, WrappingMul, WrappingSub,
-    },
+    num::{Float, Int, Num, Real, Signed, ops::*},
     simd::{MaskLike, Select, SimdLike},
 };
 
@@ -372,6 +369,66 @@ impl<T: Copy + NumOrd> GVec3<T> {
         self.max(min).min(max)
     }
 
+    /// Returns a vector containing the minimum values for each element of `self` and `rhs`,
+    /// using [`NumOrd::min_fast`].
+    ///
+    /// # Floating-Point Types
+    ///
+    /// This is faster than [`min`](Self::min), but handles NaN and signed zero differently.
+    /// Given a component of `self` and `rhs`, it _always_ returns `rhs` if `self` does not
+    /// compare less than `rhs`, even if either value is NaN or if the two values compare equal
+    /// (such as for the case of +0.0 and -0.0).
+    ///
+    /// See [`NumOrd::min_fast`] for more details.
+    #[inline]
+    #[must_use]
+    pub fn min_fast(self, rhs: Self) -> Self {
+        Self::new(
+            self.x.min_fast(rhs.x),
+            self.y.min_fast(rhs.y),
+            self.z.min_fast(rhs.z),
+        )
+    }
+
+    /// Returns a vector containing the maximum values for each element of `self` and `rhs`,
+    /// using [`NumOrd::max_fast`].
+    ///
+    /// # Floating-Point Types
+    ///
+    /// This is faster than [`max`](Self::max), but handles NaN and signed zero differently.
+    /// Given a component of `self` and `rhs`, it _always_ returns `rhs` if `self` does not
+    /// compare greater than `rhs`, even if either value is NaN or if the two values compare equal
+    /// (such as for the case of +0.0 and -0.0).
+    ///
+    /// See [`NumOrd::max_fast`] for more details.
+    #[inline]
+    #[must_use]
+    pub fn max_fast(self, rhs: Self) -> Self {
+        Self::new(
+            self.x.max_fast(rhs.x),
+            self.y.max_fast(rhs.y),
+            self.z.max_fast(rhs.z),
+        )
+    }
+
+    /// Element-wise clamping of values, using [`min_fast`](Self::min_fast) and
+    /// [`max_fast`](Self::max_fast).
+    ///
+    /// # Floating-Point Types
+    ///
+    /// This is faster than [`clamp`](Self::clamp), but handles NaN and signed zero differently.
+    /// Given a component of `self`, `min`, and `max`, it _always_ returns `min` if `self` does not
+    /// compare greater than `min`, and otherwise it _always_ returns `max` if `self` does not
+    /// compare less than `max`, even if any of the values are NaN or if the two values compare equal
+    /// (such as for the case of +0.0 and -0.0).
+    ///
+    /// See [`NumOrd::min_fast`] and [`NumOrd::clamp_fast`] for more details.
+    #[inline]
+    #[must_use]
+    pub fn clamp_fast(self, min: Self, max: Self) -> Self {
+        self.max_fast(min).min_fast(max)
+    }
+
     /// Returns the horizontal minimum of `self`.
     ///
     /// In other words this computes `min(x, y, ..)`.
@@ -600,12 +657,24 @@ impl<T: Real> GVec3<T> {
         self - self.project_onto_normalized(rhs)
     }
 
-    /// Returns a vector containing the nearest integer to a number for each element of `self`.
-    /// Round half-way cases away from zero.
+    /// Returns a vector containing the integer nearest to a number for each element of `self`.
+    /// If a value is half-way between two integers, rounds away from zero.
     #[inline]
     #[must_use]
     pub fn round(self) -> Self {
         Self::new(self.x.round(), self.y.round(), self.z.round())
+    }
+
+    /// Returns a vector containing the integer nearest to a number for each element of `self`.
+    /// If a value is half-way between two integers, rounds to the number with an even least significant digit.
+    #[inline]
+    #[must_use]
+    pub fn round_ties_even(self) -> Self {
+        Self::new(
+            self.x.round_ties_even(),
+            self.y.round_ties_even(),
+            self.z.round_ties_even(),
+        )
     }
 
     /// Returns a vector containing the largest integer less than or equal to a number for each
@@ -776,6 +845,23 @@ impl<T: Real> GVec3<T> {
             self.x.midpoint(rhs.x),
             self.y.midpoint(rhs.y),
             self.z.midpoint(rhs.z),
+        )
+    }
+
+    /// Calculates the midpoint between `self` and `rhs` as `(self + rhs) / 2`.
+    ///
+    /// # Floating-Point Types
+    ///
+    /// This is a faster version of [`midpoint`](Self::midpoint), which additionally guards
+    /// against overflow and underflow. For example, `GVec3::MAX.midpoint(GVec3::MAX)` is `GVec3::MAX`,
+    /// but `GVec3::MAX.midpoint_fast(GVec3::MAX)` overflows to `GVec3::INFINITY`.
+    #[inline]
+    #[must_use]
+    pub fn midpoint_fast(self, rhs: Self) -> Self {
+        Self::new(
+            Real::midpoint_fast(self.x, rhs.x),
+            Real::midpoint_fast(self.y, rhs.y),
+            Real::midpoint_fast(self.z, rhs.z),
         )
     }
 
