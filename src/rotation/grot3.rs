@@ -82,7 +82,7 @@ impl<T: Float> GRot3<T> {
     pub const NAN: Self = Self::from_xyzw(T::NAN, T::NAN, T::NAN, T::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GRot3<T> {
     /// Creates a new 3D rotation.
     ///

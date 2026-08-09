@@ -111,7 +111,7 @@ impl<T: MaskLike> GVec4<T> {
     pub const FALSE: Self = Self::new(T::FALSE, T::FALSE, T::FALSE, T::FALSE);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Copy> GVec4<T> {
     /// Creates a new vector.
     #[inline(always)]
@@ -954,7 +954,7 @@ impl<T: Real> GVec4<T> {
         let mask = k.num_gt(T::ZERO);
         let out = self * eta - n * (eta * ndi + k.sqrt());
 
-        Self::select(mask, Self::ZERO, out)
+        Self::select(mask, out, Self::ZERO)
     }
 }
 

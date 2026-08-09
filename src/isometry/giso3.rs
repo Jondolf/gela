@@ -36,7 +36,7 @@ impl<T: Float> GIso3<T> {
     pub const NAN: Self = Self::from_rotation_translation(GRot3::NAN, GVec3::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GIso3<T> {
     /// Creates an isometry from a rotation and a translation.
     #[inline(always)]
@@ -287,21 +287,6 @@ impl<'a, T: Real> Product<&'a GIso3<T>> for GIso3<T> {
         I: Iterator<Item = &'a Self>,
     {
         iter.fold(Self::IDENTITY, |a, &b| a * b)
-    }
-}
-
-impl<T: Real> Deref for GIso3<T> {
-    type Target = crate::deref::Cols3<GVec3<T>>;
-    #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(self as *const Self as *const Self::Target) }
-    }
-}
-
-impl<T: Real> DerefMut for GIso3<T> {
-    #[inline(always)]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { &mut *(self as *mut Self as *mut Self::Target) }
     }
 }
 

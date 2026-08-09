@@ -53,7 +53,7 @@ impl<T: Float> GMat2<T> {
     pub const NAN: Self = Self::from_cols(GVec2::NAN, GVec2::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GMat2<T> {
     #[inline(always)]
     #[must_use]
@@ -587,7 +587,7 @@ impl<T: Real + Mul<Output = T>> Mul for GMat2<T> {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: GMat2<T>) -> Self {
-        GMat2::from_cols(self.x_axis.mul(rhs.x_axis), self.y_axis.mul(rhs.y_axis))
+        GMat2::from_cols(self.mul_vec2(rhs.x_axis), self.mul_vec2(rhs.y_axis))
     }
 }
 

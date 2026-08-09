@@ -104,7 +104,7 @@ impl<T: MaskLike> GVec3<T> {
     pub const FALSE: Self = Self::new(T::FALSE, T::FALSE, T::FALSE);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Copy> GVec3<T> {
     /// Creates a new vector.
     #[inline(always)]
@@ -196,7 +196,7 @@ impl<T: Copy> GVec3<T> {
         slice[..3].copy_from_slice(&self.to_array());
     }
 
-    /// Creates a 4D vector from `self` and the given `z` value.
+    /// Creates a 4D vector from `self` and the given `w` value.
     #[inline]
     #[must_use]
     pub const fn extend(self, w: T) -> GVec4<T> {
@@ -906,7 +906,7 @@ impl<T: Real> GVec3<T> {
         let mask = k.num_gt(T::ZERO);
         let out = self * eta - n * (eta * ndi + k.sqrt());
 
-        Self::select(mask, Self::ZERO, out)
+        Self::select(mask, out, Self::ZERO)
     }
 
     /// Returns the angle (in radians) between two vectors in the range `[0, +π]`.

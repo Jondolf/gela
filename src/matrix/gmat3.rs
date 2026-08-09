@@ -76,7 +76,7 @@ impl<T: Float> GMat3<T> {
     pub const NAN: Self = Self::from_cols(GVec3::NAN, GVec3::NAN, GVec3::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GMat3<T> {
     #[allow(clippy::too_many_arguments)]
     #[inline(always)]
@@ -540,7 +540,7 @@ impl<T: Real> GMat3<T> {
         self.inverse_checked::<false>().0
     }
 
-    /// Returns the inverse of `self` or `Mat2::ZERO` if the matrix is not invertible.
+    /// Returns the inverse of `self` or `GMat3::ZERO` if the matrix is not invertible.
     #[inline]
     #[must_use]
     pub fn inverse_or_zero(&self) -> Self {
@@ -920,9 +920,9 @@ impl<T: Real + Mul<Output = T>> Mul for GMat3<T> {
     #[inline]
     fn mul(self, rhs: GMat3<T>) -> Self {
         GMat3::from_cols(
-            self.x_axis.mul(rhs.x_axis),
-            self.y_axis.mul(rhs.y_axis),
-            self.z_axis.mul(rhs.z_axis),
+            self.mul_vec3(rhs.x_axis),
+            self.mul_vec3(rhs.y_axis),
+            self.mul_vec3(rhs.z_axis),
         )
     }
 }

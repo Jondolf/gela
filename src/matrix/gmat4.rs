@@ -89,7 +89,7 @@ impl<T: Float> GMat4<T> {
     pub const NAN: Self = Self::from_cols(GVec4::NAN, GVec4::NAN, GVec4::NAN, GVec4::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GMat4<T> {
     #[allow(clippy::too_many_arguments)]
     #[inline(always)]
@@ -1421,10 +1421,10 @@ impl<T: Real + Mul<Output = T>> Mul for GMat4<T> {
     #[inline]
     fn mul(self, rhs: GMat4<T>) -> Self {
         GMat4::from_cols(
-            self.x_axis.mul(rhs.x_axis),
-            self.y_axis.mul(rhs.y_axis),
-            self.z_axis.mul(rhs.z_axis),
-            self.w_axis.mul(rhs.w_axis),
+            self.mul_vec4(rhs.x_axis),
+            self.mul_vec4(rhs.y_axis),
+            self.mul_vec4(rhs.z_axis),
+            self.mul_vec4(rhs.w_axis),
         )
     }
 }

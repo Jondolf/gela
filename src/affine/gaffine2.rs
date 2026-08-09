@@ -43,7 +43,7 @@ impl<T: Float> GAffine2<T> {
     pub const NAN: Self = Self::from_cols(GVec2::NAN, GVec2::NAN, GVec2::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GAffine2<T> {
     /// Creates an affine transform from three column vectors.
     #[inline(always)]

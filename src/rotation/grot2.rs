@@ -79,7 +79,7 @@ impl<T: Float> GRot2<T> {
     pub const NAN: Self = Self::from_cos_sin(T::NAN, T::NAN);
 }
 
-/// # Constructors
+/// # Construction
 impl<T: Real> GRot2<T> {
     /// Creates a new 2D rotation.
     ///
