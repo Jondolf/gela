@@ -9,7 +9,7 @@ use core::{
 use gnum::num::ScalarFloat;
 use gnum::{
     cmp::{NumEq, NumOrd},
-    num::{Float, Int, Num, Real, Signed, ops::*},
+    num::{Float, Int, Num, NumCast, Real, Signed, ops::*},
     simd::{MaskLike, Select, SimdLike},
 };
 
@@ -1515,6 +1515,19 @@ where
             self.y.replace_unchecked(i, value.y);
             self.z.replace_unchecked(i, value.z);
         }
+    }
+}
+
+/// # Conversion
+impl<T: Copy> GVec3<T> {
+    /// Casts the elements of `self` to another type.
+    #[inline]
+    #[must_use]
+    pub fn cast<U: Copy>(self) -> GVec3<U>
+    where
+        T: NumCast<U>,
+    {
+        GVec3::new(self.x.cast(), self.y.cast(), self.z.cast())
     }
 }
 

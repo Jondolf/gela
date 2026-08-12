@@ -8,7 +8,7 @@ use core::{
 };
 
 use gnum::{
-    num::{Float, Real},
+    num::{Float, NumCast, Real},
     simd::{MaskLike, Select},
 };
 
@@ -481,6 +481,19 @@ where
             self.x_axis.replace_unchecked(i, value.x_axis);
             self.y_axis.replace_unchecked(i, value.y_axis);
         }
+    }
+}
+
+/// # Conversion
+impl<T: Real> GMat2<T> {
+    /// Casts the elements of `self` to another type.
+    #[inline]
+    #[must_use]
+    pub fn cast<U: Real>(self) -> GMat2<U>
+    where
+        T: NumCast<U>,
+    {
+        GMat2::from_cols(self.x_axis.cast(), self.y_axis.cast())
     }
 }
 

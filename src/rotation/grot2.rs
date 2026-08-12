@@ -8,7 +8,7 @@ use core::{
 };
 
 use gnum::{
-    num::{Float, Real},
+    num::{Float, NumCast, Real},
     simd::Select,
 };
 
@@ -506,6 +506,19 @@ where
             self.cos.replace_unchecked(i, value.cos);
             self.sin.replace_unchecked(i, value.sin);
         }
+    }
+}
+
+/// # Conversion
+impl<T: Real> GRot2<T> {
+    /// Casts the elements of `self` to another type.
+    #[inline]
+    #[must_use]
+    pub fn cast<U: Real>(self) -> GRot2<U>
+    where
+        T: NumCast<U>,
+    {
+        GRot2::from_cos_sin(self.cos.cast(), self.sin.cast())
     }
 }
 

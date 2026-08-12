@@ -5,7 +5,7 @@ use crate::vector::{GVec3, Vec4Swizzles};
 use core::{iter::Product, ops::*};
 
 use gnum::{
-    num::{Float, Real},
+    num::{Float, NumCast, Real},
     simd::Select,
 };
 
@@ -511,6 +511,22 @@ where
         unsafe {
             self.matrix3.replace_unchecked(i, value.matrix3);
             self.translation.replace_unchecked(i, value.translation);
+        }
+    }
+}
+
+/// # Conversion
+impl<T: Real> GAffine3<T> {
+    /// Casts the elements of `self` to another type.
+    #[inline]
+    #[must_use]
+    pub fn cast<U: Real>(self) -> GAffine3<U>
+    where
+        T: NumCast<U>,
+    {
+        GAffine3 {
+            matrix3: self.matrix3.cast(),
+            translation: self.translation.cast(),
         }
     }
 }

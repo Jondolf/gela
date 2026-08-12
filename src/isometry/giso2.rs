@@ -4,7 +4,7 @@ use crate::vector::GVec2;
 use core::{iter::Product, ops::*};
 
 use gnum::{
-    num::{Float, Real},
+    num::{Float, NumCast, Real},
     simd::Select,
 };
 
@@ -213,6 +213,19 @@ where
             self.rotation.replace_unchecked(i, value.rotation);
             self.translation.replace_unchecked(i, value.translation);
         }
+    }
+}
+
+/// # Conversion
+impl<T: Real> GIso2<T> {
+    /// Casts the elements of `self` to another type.
+    #[inline]
+    #[must_use]
+    pub fn cast<U: Real>(self) -> GIso2<U>
+    where
+        T: NumCast<U>,
+    {
+        GIso2::from_rotation_translation(self.rotation.cast(), self.translation.cast())
     }
 }
 

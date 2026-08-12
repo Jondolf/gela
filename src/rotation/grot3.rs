@@ -9,7 +9,7 @@ use core::{
 };
 
 use gnum::{
-    num::{Float, Real, ScalarReal},
+    num::{Float, NumCast, Real, ScalarReal},
     simd::{MaskLike, Select},
 };
 
@@ -922,6 +922,19 @@ where
             self.z.replace_unchecked(i, value.z);
             self.w.replace_unchecked(i, value.w);
         }
+    }
+}
+
+/// # Conversion
+impl<T: Real> GRot3<T> {
+    /// Casts the elements of `self` to another type.
+    #[inline]
+    #[must_use]
+    pub fn cast<U: Real>(self) -> GRot3<U>
+    where
+        T: NumCast<U>,
+    {
+        GRot3::from_xyzw(self.x.cast(), self.y.cast(), self.z.cast(), self.w.cast())
     }
 }
 
