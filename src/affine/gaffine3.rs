@@ -14,11 +14,7 @@ use zerocopy_derive::*;
 
 /// A 3D affine transform, which can represent translation, rotation, scaling and shearing.
 #[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
-#[cfg_attr(
-    feature = "zerocopy",
-    derive(FromBytes, Immutable, IntoBytes, KnownLayout)
-)]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[repr(C)]
 pub struct GAffine3<T: Real> {
     /// The 3x3 matrix containing the rotation and scale of the affine transformation.

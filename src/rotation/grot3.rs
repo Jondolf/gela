@@ -35,12 +35,8 @@ pub const fn gquat<T: Real>(x: T, y: T, z: T, w: T) -> GRot3<T> {
 /// Users are responsible for normalizing the quaternion when necessary, using methods
 /// such as [`normalize`](Self::normalize).
 #[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
-#[cfg_attr(
-    feature = "zerocopy",
-    derive(FromBytes, Immutable, IntoBytes, KnownLayout)
-)]
-#[repr(align(16))]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
+#[cfg_attr(feature = "cuda", repr(align(16)))]
 #[repr(C)]
 #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
 #[doc(alias = "GQuat")]

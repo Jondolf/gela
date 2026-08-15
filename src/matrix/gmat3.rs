@@ -47,11 +47,7 @@ pub const fn gmat3<T: Real>(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>
 /// vectors respectively. These methods assume that `Self` contains a valid affine
 /// transform.
 #[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
-#[cfg_attr(
-    feature = "zerocopy",
-    derive(FromBytes, Immutable, IntoBytes, KnownLayout)
-)]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[repr(C)]
 pub struct GMat3<T: Real> {
     /// The first column of the matrix.

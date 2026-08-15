@@ -25,11 +25,7 @@ pub const fn gvec3<T: Copy>(x: T, y: T, z: T) -> GVec3<T> {
 
 /// A 3-dimensional vector.
 #[derive(Clone, Copy, Default, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
-#[cfg_attr(
-    feature = "zerocopy",
-    derive(FromBytes, Immutable, IntoBytes, KnownLayout)
-)]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[repr(C)]
 #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
 pub struct GVec3<T: Copy> {

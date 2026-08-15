@@ -13,7 +13,6 @@ use zerocopy_derive::*;
 
 /// A 2D isometry, which can represent rotation followed by translation.
 #[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::AnyBitPattern))]
 #[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[repr(C)]
 pub struct GIso2<T: Real> {

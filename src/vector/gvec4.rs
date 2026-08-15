@@ -23,6 +23,7 @@ pub const fn gvec4<T: Copy>(x: T, y: T, z: T, w: T) -> GVec4<T> {
 
 /// A 4-dimensional vector.
 #[derive(Clone, Copy, Default, PartialEq)]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[cfg_attr(any(not(target_arch = "spirv"), feature = "cuda"), repr(align(16)))]
 #[cfg_attr(not(target_arch = "spirv"), repr(C))]
 #[cfg_attr(target_arch = "spirv", repr(simd))]

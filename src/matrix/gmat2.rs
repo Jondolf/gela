@@ -24,13 +24,7 @@ pub const fn gmat2<T: Real>(x_axis: GVec2<T>, y_axis: GVec2<T>) -> GMat2<T> {
 
 /// A 2x2 column major matrix.
 #[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::Pod, bytemuck::Zeroable))]
-#[cfg_attr(
-    feature = "zerocopy",
-    derive(FromBytes, Immutable, IntoBytes, KnownLayout)
-)]
-#[repr(align(16))]
-#[cfg_attr(feature = "cuda", repr(align(8)))]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[repr(C)]
 pub struct GMat2<T: Real> {
     /// The first column of the matrix.
