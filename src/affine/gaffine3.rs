@@ -165,7 +165,7 @@ impl<T: Real> GAffine3<T> {
     #[doc(alias = "from_quat")]
     pub fn from_rotation(rotation: GRot3<T>) -> Self {
         Self {
-            matrix3: GMat3::from_rot3(rotation),
+            matrix3: GMat3::from_rotation(rotation),
             translation: GVec3::ZERO,
         }
     }
@@ -258,7 +258,7 @@ impl<T: Real> GAffine3<T> {
         rotation: GRot3<T>,
         translation: GVec3<T>,
     ) -> Self {
-        let rotation = GMat3::from_rot3(rotation);
+        let rotation = GMat3::from_rotation(rotation);
         #[allow(clippy::useless_conversion)]
         Self {
             matrix3: GMat3::from_cols(
@@ -276,7 +276,7 @@ impl<T: Real> GAffine3<T> {
     pub fn from_rotation_translation(rotation: GRot3<T>, translation: GVec3<T>) -> Self {
         #[allow(clippy::useless_conversion)]
         Self {
-            matrix3: GMat3::from_rot3(rotation),
+            matrix3: GMat3::from_rotation(rotation),
             translation: translation.into(),
         }
     }

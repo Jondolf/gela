@@ -35,7 +35,7 @@ pub const fn gmat4<T: Real>(
 /// for some affine operations.
 ///
 /// Affine transformations including 3D translation, rotation and scale can be created
-/// using methods such as [`Self::from_translation()`], [`Self::from_rot3()`],
+/// using methods such as [`Self::from_translation()`], [`Self::from_rotation()`],
 /// [`Self::from_scale()`] and [`Self::from_scale_rotation_translation()`].
 ///
 /// Orthographic projections can be created using the methods [`Self::orthographic_lh()`] for
@@ -318,17 +318,6 @@ impl<T: Real> GMat4<T> {
         (scale, rotation, translation)
     }
 
-    /// Creates an affine transformation matrix from the given `rotation` quaternion.
-    ///
-    /// The resulting matrix can be used to transform 3D points and vectors.
-    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
-    #[inline]
-    #[must_use]
-    pub fn from_rot3(rotation: GRot3<T>) -> Self {
-        let (x_axis, y_axis, z_axis) = Self::quat_to_axes(rotation);
-        Self::from_cols(x_axis, y_axis, z_axis, GVec4::W)
-    }
-
     /// Creates an affine transformation matrix from the given 3x3 linear transformation
     /// matrix.
     ///
@@ -372,6 +361,68 @@ impl<T: Real> GMat4<T> {
             GVec4::Y,
             GVec4::Z,
             GVec4::new(translation.x, translation.y, translation.z, T::ONE),
+        )
+    }
+
+    /// Creates an affine transformation matrix from the given `rotation` quaternion.
+    ///
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    #[inline]
+    #[must_use]
+    pub fn from_rotation(rotation: GRot3<T>) -> Self {
+        let (x_axis, y_axis, z_axis) = Self::quat_to_axes(rotation);
+        Self::from_cols(x_axis, y_axis, z_axis, GVec4::W)
+    }
+
+    /// Creates an affine transformation matrix containing a 3D rotation around the x axis of
+    /// `angle` (in radians).
+    ///
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    #[inline]
+    #[must_use]
+    pub fn from_rotation_x(angle: T) -> Self {
+        let (sina, cosa) = angle.sin_cos_stable();
+        Self::from_cols(
+            GVec4::X,
+            GVec4::new(T::ZERO, cosa, sina, T::ZERO),
+            GVec4::new(T::ZERO, -sina, cosa, T::ZERO),
+            GVec4::W,
+        )
+    }
+
+    /// Creates an affine transformation matrix containing a 3D rotation around the y axis of
+    /// `angle` (in radians).
+    ///
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    #[inline]
+    #[must_use]
+    pub fn from_rotation_y(angle: T) -> Self {
+        let (sina, cosa) = angle.sin_cos_stable();
+        Self::from_cols(
+            GVec4::new(cosa, T::ZERO, -sina, T::ZERO),
+            GVec4::Y,
+            GVec4::new(sina, T::ZERO, cosa, T::ZERO),
+            GVec4::W,
+        )
+    }
+
+    /// Creates an affine transformation matrix containing a 3D rotation around the z axis of
+    /// `angle` (in radians).
+    ///
+    /// The resulting matrix can be used to transform 3D points and vectors.
+    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
+    #[inline]
+    #[must_use]
+    pub fn from_rotation_z(angle: T) -> Self {
+        let (sina, cosa) = angle.sin_cos_stable();
+        Self::from_cols(
+            GVec4::new(cosa, sina, T::ZERO, T::ZERO),
+            GVec4::new(-sina, cosa, T::ZERO, T::ZERO),
+            GVec4::Z,
+            GVec4::W,
         )
     }
 
@@ -434,57 +485,6 @@ impl<T: ScalarReal> GMat4<T> {
 }
 
 impl<T: Real> GMat4<T> {
-    /// Creates an affine transformation matrix containing a 3D rotation around the x axis of
-    /// `angle` (in radians).
-    ///
-    /// The resulting matrix can be used to transform 3D points and vectors.
-    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
-    #[inline]
-    #[must_use]
-    pub fn from_rotation_x(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos_stable();
-        Self::from_cols(
-            GVec4::X,
-            GVec4::new(T::ZERO, cosa, sina, T::ZERO),
-            GVec4::new(T::ZERO, -sina, cosa, T::ZERO),
-            GVec4::W,
-        )
-    }
-
-    /// Creates an affine transformation matrix containing a 3D rotation around the y axis of
-    /// `angle` (in radians).
-    ///
-    /// The resulting matrix can be used to transform 3D points and vectors.
-    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
-    #[inline]
-    #[must_use]
-    pub fn from_rotation_y(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos_stable();
-        Self::from_cols(
-            GVec4::new(cosa, T::ZERO, -sina, T::ZERO),
-            GVec4::Y,
-            GVec4::new(sina, T::ZERO, cosa, T::ZERO),
-            GVec4::W,
-        )
-    }
-
-    /// Creates an affine transformation matrix containing a 3D rotation around the z axis of
-    /// `angle` (in radians).
-    ///
-    /// The resulting matrix can be used to transform 3D points and vectors.
-    /// See [`Self::transform_point3()`] and [`Self::transform_vector3()`].
-    #[inline]
-    #[must_use]
-    pub fn from_rotation_z(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos_stable();
-        Self::from_cols(
-            GVec4::new(cosa, sina, T::ZERO, T::ZERO),
-            GVec4::new(-sina, cosa, T::ZERO, T::ZERO),
-            GVec4::Z,
-            GVec4::W,
-        )
-    }
-
     /// Creates an affine transformation matrix containing the given 3D non-uniform `scale`.
     ///
     /// The resulting matrix can be used to transform 3D points and vectors.

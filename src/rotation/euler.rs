@@ -372,6 +372,6 @@ impl<T: ScalarReal> ToEuler for GMat4<T> {
 impl<T: ScalarReal> ToEuler for GRot3<T> {
     type Scalar = T;
     fn to_euler_angles(self, order: EulerRot) -> (T, T, T) {
-        GMat3::from_rot3(self).to_euler_angles(order)
+        GMat3::from_rotation(self).to_euler_angles(order)
     }
 }

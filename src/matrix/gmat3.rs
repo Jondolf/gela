@@ -30,7 +30,7 @@ pub const fn gmat3<T: Real>(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>
 /// using a 3x3 matrix.
 ///
 /// Linear transformations including 3D rotation and scale can be created using methods
-/// such as [`Self::from_diagonal()`], [`Self::from_rot3()`], [`Self::from_axis_angle()`],
+/// such as [`Self::from_diagonal()`], [`Self::from_rotation()`], [`Self::from_axis_angle()`],
 /// [`Self::from_rotation_x()`], [`Self::from_rotation_y()`], or
 /// [`Self::from_rotation_z()`].
 ///
@@ -221,7 +221,7 @@ impl<T: Real> GMat3<T> {
     /// Creates a 3D rotation matrix from the given quaternion.
     #[inline]
     #[must_use]
-    pub fn from_rot3(rotation: GRot3<T>) -> Self {
+    pub fn from_rotation(rotation: GRot3<T>) -> Self {
         let x2 = rotation.x + rotation.x;
         let y2 = rotation.y + rotation.y;
         let z2 = rotation.z + rotation.z;
@@ -239,6 +239,42 @@ impl<T: Real> GMat3<T> {
             GVec3::new(T::ONE - (yy + zz), xy + wz, xz - wy),
             GVec3::new(xy - wz, T::ONE - (xx + zz), yz + wx),
             GVec3::new(xz + wy, yz - wx, T::ONE - (xx + yy)),
+        )
+    }
+
+    /// Creates a 3D rotation matrix from `angle` (in radians) around the x axis.
+    #[inline]
+    #[must_use]
+    pub fn from_rotation_x(angle: T) -> Self {
+        let (sina, cosa) = angle.sin_cos_stable();
+        Self::from_cols(
+            GVec3::X,
+            GVec3::new(T::ZERO, cosa, sina),
+            GVec3::new(T::ZERO, -sina, cosa),
+        )
+    }
+
+    /// Creates a 3D rotation matrix from `angle` (in radians) around the y axis.
+    #[inline]
+    #[must_use]
+    pub fn from_rotation_y(angle: T) -> Self {
+        let (sina, cosa) = angle.sin_cos_stable();
+        Self::from_cols(
+            GVec3::new(cosa, T::ZERO, -sina),
+            GVec3::Y,
+            GVec3::new(sina, T::ZERO, cosa),
+        )
+    }
+
+    /// Creates a 3D rotation matrix from `angle` (in radians) around the z axis.
+    #[inline]
+    #[must_use]
+    pub fn from_rotation_z(angle: T) -> Self {
+        let (sina, cosa) = angle.sin_cos_stable();
+        Self::from_cols(
+            GVec3::new(cosa, sina, T::ZERO),
+            GVec3::new(-sina, cosa, T::ZERO),
+            GVec3::Z,
         )
     }
 
@@ -282,42 +318,6 @@ impl<T: ScalarReal> GMat3<T> {
 }
 
 impl<T: Real> GMat3<T> {
-    /// Creates a 3D rotation matrix from `angle` (in radians) around the x axis.
-    #[inline]
-    #[must_use]
-    pub fn from_rotation_x(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos_stable();
-        Self::from_cols(
-            GVec3::X,
-            GVec3::new(T::ZERO, cosa, sina),
-            GVec3::new(T::ZERO, -sina, cosa),
-        )
-    }
-
-    /// Creates a 3D rotation matrix from `angle` (in radians) around the y axis.
-    #[inline]
-    #[must_use]
-    pub fn from_rotation_y(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos_stable();
-        Self::from_cols(
-            GVec3::new(cosa, T::ZERO, -sina),
-            GVec3::Y,
-            GVec3::new(sina, T::ZERO, cosa),
-        )
-    }
-
-    /// Creates a 3D rotation matrix from `angle` (in radians) around the z axis.
-    #[inline]
-    #[must_use]
-    pub fn from_rotation_z(angle: T) -> Self {
-        let (sina, cosa) = angle.sin_cos_stable();
-        Self::from_cols(
-            GVec3::new(cosa, sina, T::ZERO),
-            GVec3::new(-sina, cosa, T::ZERO),
-            GVec3::Z,
-        )
-    }
-
     /// Creates an affine transformation matrix from the given 2D `translation`.
     ///
     /// The resulting matrix can be used to transform 2D points and vectors. See
