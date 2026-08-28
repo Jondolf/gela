@@ -284,6 +284,38 @@ impl<T: Real + MulAssign> MulAssign<&GIso2<T>> for GIso2<T> {
     }
 }
 
+impl<T: Real + Mul<Output = T>> Mul<GVec2<T>> for GIso2<T> {
+    type Output = GVec2<T>;
+    #[inline]
+    fn mul(self, rhs: GVec2<T>) -> GVec2<T> {
+        self.transform_point2(rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<&GVec2<T>> for GIso2<T> {
+    type Output = GVec2<T>;
+    #[inline]
+    fn mul(self, rhs: &GVec2<T>) -> GVec2<T> {
+        self.mul(*rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<GVec2<T>> for &GIso2<T> {
+    type Output = GVec2<T>;
+    #[inline]
+    fn mul(self, rhs: GVec2<T>) -> GVec2<T> {
+        (*self).mul(rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<&GVec2<T>> for &GIso2<T> {
+    type Output = GVec2<T>;
+    #[inline]
+    fn mul(self, rhs: &GVec2<T>) -> GVec2<T> {
+        (*self).mul(*rhs)
+    }
+}
+
 impl<T: Real> Product<GIso2<T>> for GIso2<T> {
     fn product<I>(iter: I) -> Self
     where
