@@ -420,19 +420,27 @@ and choose the SIMD backend based on the `wide` and `portable_simd` features.
 
 ## Cross-Platform Determinism
 
-For certain applications, it can be crucial that mathematical operations return bit-identical
-results across calls and platforms. Furthermore, it can also be important that scalar math
-produces the exact same results as SIMD math. This way, a physics engine can produce identical
-simulations across machines, while still leveraging SIMD optimizations.
+On IEEE-754 compliant hardware, all operations in `gela` are guaranteed to be
+deterministic and bit-identical across both scalar and SIMD implementations
+for the same element type, except where otherwise noted. For example,
+calling `Vec3::length` on four `Vec3` vectors is guaranteed to produce
+the same results as calling `Vec3x4::length` on a `Vec3x4` SIMD vector.
+These guarantees are provided by the [`gnum`] crate.
 
-`gela` supports cross-platform deterministic math with identical results across scalar and SIMD
-types on all IEEE-754 compliant hardware _by default_. This is possible thanks to [`gnum`] providing
-custom-made portable versions of otherwise non-deterministic methods, such as transcendental operations
-(`sin`, `cos`, `atan2`, and so on). These custom methods are suffixed with `_stable`, for example
-`sin_stable`. The performance difference compared to native operations is typically minimal,
-or for some operations even positive, especially for SIMD types.
+Certain operations such as `Vec3::sin` are non-deterministic, and are documented as such.
+For these methods, `gela` provides "stable" alternatives such as `Vec3::sin_stable`,
+which are deterministic and guaranteed to produce the same results across both scalar
+and SIMD implementations for the same element type. Some of these stable alternatives
+may have lower precision or be slightly slower than the standard versions for scalar types,
+but are often competitive or even _faster_ for SIMD types.
 
-See the documentation of [`gnum`] for more information about its determinism guarantees.
+Note that these determinism guarantees only apply to a given version of `gela`, [`gnum`],
+and the Rust compiler. Do not expect bit-identical results across different versions.
+
+If these determinism guarantees are not met for some operation, it is considered
+a bug and should be reported on the [issue tracker].
+
+[issue tracker]: https://github.com/Jondolf/gela/issues
 
 ## Feature Flags
 
