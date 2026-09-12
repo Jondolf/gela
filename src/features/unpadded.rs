@@ -22,16 +22,15 @@ impl_unpadded_element!(f32, f64, i32, u32, i64, u64, i128, u128);
 #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
 impl_unpadded_element!(isize, usize);
 
-#[cfg(feature = "portable_simd")]
 impl_unpadded_element!(
-    gnum::f32x4,
-    gnum::f32x8,
-    gnum::f64x2,
-    gnum::f64x4,
-    gnum::i32x4,
-    gnum::i32x8,
-    gnum::u32x4,
-    gnum::u32x8,
+    gimd::f32x4,
+    gimd::f32x8,
+    gimd::f64x2,
+    gimd::f64x4,
+    gimd::i32x4,
+    gimd::i32x8,
+    gimd::u32x4,
+    gimd::u32x8,
 );
 
 #[cfg(test)]
@@ -57,16 +56,15 @@ mod tests {
         assert_unpadded::<usize>();
     }
 
-    #[cfg(feature = "portable_simd")]
     #[test]
     fn simd_element_sizes_are_multiples_of_four() {
-        assert_unpadded::<gnum::f32x4>();
-        assert_unpadded::<gnum::f32x8>();
-        assert_unpadded::<gnum::f64x2>();
-        assert_unpadded::<gnum::f64x4>();
-        assert_unpadded::<gnum::i32x4>();
-        assert_unpadded::<gnum::i32x8>();
-        assert_unpadded::<gnum::u32x4>();
-        assert_unpadded::<gnum::u32x8>();
+        assert_unpadded::<gimd::f32x4>();
+        assert_unpadded::<gimd::f32x8>();
+        assert_unpadded::<gimd::f64x2>();
+        assert_unpadded::<gimd::f64x4>();
+        assert_unpadded::<gimd::i32x4>();
+        assert_unpadded::<gimd::i32x8>();
+        assert_unpadded::<gimd::u32x4>();
+        assert_unpadded::<gimd::u32x8>();
     }
 }

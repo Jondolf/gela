@@ -8,11 +8,11 @@ use rand::{
 };
 
 use crate::{
-    affine::{GAffine2, GAffine3},
-    isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
-    rotation::{GRot2, GRot3},
-    vector::{GVec2, GVec3, GVec4},
+    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
+    isometry::{GIso2, GIso3, Iso3A},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    rotation::{GRot2, GRot3, Rot3A},
+    vector::{BVec3A, BVec4A, GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 macro_rules! impl_standard_uniform {
@@ -27,6 +27,21 @@ macro_rules! impl_standard_uniform {
         {
             #[inline]
             fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty<$elem> {
+                let $array: [$elem; $count] = core::array::from_fn(|_| rng.random());
+                $from_array
+            }
+        }
+    };
+}
+
+macro_rules! impl_standard_uniform_aligned {
+    ($ty:ident, $elem:ty, $count:literal, |$array:ident| $from_array:expr) => {
+        impl Distribution<$ty> for StandardUniform
+        where
+            StandardUniform: Distribution<$elem>,
+        {
+            #[inline]
+            fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
                 let $array: [$elem; $count] = core::array::from_fn(|_| rng.random());
                 $from_array
             }
@@ -81,6 +96,30 @@ where
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> GIso3<T> {
         GIso3::from_rotation_translation(rng.random::<GRot3<T>>(), rng.random::<GVec3<T>>())
+    }
+}
+
+impl_standard_uniform_aligned!(BVec3A, bool, 3, |a| BVec3A::from_array(a));
+impl_standard_uniform_aligned!(BVec4A, bool, 4, |a| BVec4A::from_array(a));
+impl_standard_uniform_aligned!(Vec3A, f32, 3, |a| Vec3A::from_array(a));
+impl_standard_uniform_aligned!(Vec4A, f32, 4, |a| Vec4A::from_array(a));
+impl_standard_uniform_aligned!(Mat2A, f32, 4, |a| Mat2A::from_cols_array(&a));
+impl_standard_uniform_aligned!(Mat3A, f32, 9, |a| Mat3A::from_cols_array(&a));
+impl_standard_uniform_aligned!(Mat4A, f32, 16, |a| Mat4A::from_cols_array(&a));
+impl_standard_uniform_aligned!(Affine2A, f32, 6, |a| Affine2A::from_cols_array(&a));
+impl_standard_uniform_aligned!(Affine3A, f32, 12, |a| Affine3A::from_cols_array(&a));
+
+impl Distribution<Rot3A> for StandardUniform {
+    #[inline]
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Rot3A {
+        rng.random::<GRot3<f32>>().into()
+    }
+}
+
+impl Distribution<Iso3A> for StandardUniform {
+    #[inline]
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Iso3A {
+        rng.random::<GIso3<f32>>().into()
     }
 }
 
@@ -178,6 +217,55 @@ macro_rules! impl_sample_uniform {
 impl_sample_uniform!(GVec2<T>, UniformGVec2, [x, y]);
 impl_sample_uniform!(GVec3<T>, UniformGVec3, [x, y, z]);
 impl_sample_uniform!(GVec4<T>, UniformGVec4, [x, y, z, w]);
+
+macro_rules! impl_sample_uniform_aligned {
+    ($ty:ident, $sampler:ident, [$($field:ident),+ $(,)?]) => {
+        #[doc = concat!("A [`UniformSampler`] for [`", stringify!($ty), "`] values.")]
+        ///
+        /// Each element is sampled from its own range.
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct $sampler<S> { $($field: S,)+ }
+
+        impl SampleUniform for $ty {
+            type Sampler = $sampler<<f32 as SampleUniform>::Sampler>;
+        }
+
+        impl<S: UniformSampler<X = f32>> UniformSampler for $sampler<S> {
+            type X = $ty;
+
+            fn new<B1: SampleBorrow<$ty>, B2: SampleBorrow<$ty>>(low: B1, high: B2) -> Result<Self, Error> {
+                let low = *low.borrow(); let high = *high.borrow();
+                Ok(Self { $($field: S::new(low.$field, high.$field)?,)+ })
+            }
+
+            fn new_inclusive<B1: SampleBorrow<$ty>, B2: SampleBorrow<$ty>>(low: B1, high: B2) -> Result<Self, Error> {
+                let low = *low.borrow(); let high = *high.borrow();
+                Ok(Self { $($field: S::new_inclusive(low.$field, high.$field)?,)+ })
+            }
+
+            fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
+                $ty::new($(self.$field.sample(rng)),+)
+            }
+
+            fn sample_single<R: Rng + ?Sized, B1: SampleBorrow<$ty>, B2: SampleBorrow<$ty>>(
+                low: B1, high: B2, rng: &mut R,
+            ) -> Result<$ty, Error> {
+                let low = *low.borrow(); let high = *high.borrow();
+                Ok($ty::new($(S::sample_single(low.$field, high.$field, rng)?),+))
+            }
+
+            fn sample_single_inclusive<R: Rng + ?Sized, B1: SampleBorrow<$ty>, B2: SampleBorrow<$ty>>(
+                low: B1, high: B2, rng: &mut R,
+            ) -> Result<$ty, Error> {
+                let low = *low.borrow(); let high = *high.borrow();
+                Ok($ty::new($(S::sample_single_inclusive(low.$field, high.$field, rng)?),+))
+            }
+        }
+    };
+}
+
+impl_sample_uniform_aligned!(Vec3A, UniformVec3A, [x, y, z]);
+impl_sample_uniform_aligned!(Vec4A, UniformVec4A, [x, y, z, w]);
 
 #[cfg(test)]
 mod tests {

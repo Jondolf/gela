@@ -1,14 +1,19 @@
-use encase::matrix::{AsMutMatrixParts, AsRefMatrixParts, FromMatrixParts, MatrixScalar};
+use encase::{
+    matrix::{AsMutMatrixParts, AsRefMatrixParts, FromMatrixParts, MatrixScalar},
+    private::{CreateFrom, MatrixMetadata, ReadFrom, ShaderSize, ShaderType, WriteInto},
+};
 use gnum::num::Real;
 
 use crate::{
-    matrix::{GMat2, GMat3, GMat4},
-    vector::{GVec2, GVec3, GVec4},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    vector::{GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 encase::impl_vector!(2, GVec2<T>; (T: Copy); using AsRef AsMut From);
 encase::impl_vector!(3, GVec3<T>; (T: Copy); using AsRef AsMut From);
 encase::impl_vector!(4, GVec4<T>; (T: Copy); using AsRef AsMut From);
+encase::impl_vector!(3, Vec3A, f32; using AsRef AsMut From);
+encase::impl_vector!(4, Vec4A, f32; using AsRef AsMut From);
 
 macro_rules! impl_matrix_parts {
     ($($ty:ident, $dim:literal, $count:literal);* $(;)?) => {
@@ -52,6 +57,53 @@ impl_matrix_parts! {
 encase::impl_matrix!(2, 2, GMat2<T>; (T: Real));
 encase::impl_matrix!(3, 3, GMat3<T>; (T: Real));
 encase::impl_matrix!(4, 4, GMat4<T>; (T: Real));
+
+macro_rules! impl_aligned_matrix {
+    ($aligned:ident, $generic:ident) => {
+        impl ShaderType for $aligned {
+            type ExtraMetadata = MatrixMetadata;
+            const METADATA: encase::private::Metadata<MatrixMetadata> =
+                <$generic<f32> as ShaderType>::METADATA;
+        }
+
+        impl ShaderSize for $aligned {}
+
+        impl WriteInto for $aligned {
+            #[inline]
+            fn write_into<B: encase::private::BufferMut>(
+                &self,
+                writer: &mut encase::private::Writer<B>,
+            ) {
+                <$generic<f32> as WriteInto>::write_into(&(*self).into(), writer);
+            }
+        }
+
+        impl ReadFrom for $aligned {
+            #[inline]
+            fn read_from<B: encase::private::BufferRef>(
+                &mut self,
+                reader: &mut encase::private::Reader<B>,
+            ) {
+                let mut value: $generic<f32> = (*self).into();
+                value.read_from(reader);
+                *self = value.into();
+            }
+        }
+
+        impl CreateFrom for $aligned {
+            #[inline]
+            fn create_from<B: encase::private::BufferRef>(
+                reader: &mut encase::private::Reader<B>,
+            ) -> Self {
+                <$generic<f32> as CreateFrom>::create_from(reader).into()
+            }
+        }
+    };
+}
+
+impl_aligned_matrix!(Mat2A, GMat2);
+impl_aligned_matrix!(Mat3A, GMat3);
+impl_aligned_matrix!(Mat4A, GMat4);
 
 #[cfg(test)]
 mod tests {

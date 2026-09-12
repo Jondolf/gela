@@ -1,4 +1,4 @@
-use crate::matrix::GMat3;
+use crate::matrix::{GMat3, Mat4A};
 use crate::rotation::{EulerRot, FromEuler, GRot3, ToEuler};
 use crate::vector::{GVec3, GVec4, Vec4Swizzles};
 
@@ -709,7 +709,7 @@ impl<T: Real> GMat4<T> {
         );
 
         let dot0 = self.x_axis.mul(col0);
-        let dot1 = dot0.x + dot0.y + dot0.z + dot0.w;
+        let dot1 = dot0.element_sum();
 
         let inv_det = dot1.recip();
         let inverted = inverse.mul(inv_det);
@@ -1318,6 +1318,24 @@ impl<T: Real> GMat4<T> {
             self.z_axis.cast(),
             self.w_axis.cast(),
         )
+    }
+}
+
+impl GMat4<f32> {
+    /// Converts `self` to a [`Mat4A`].
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_mat4a(self) -> Mat4A {
+        Mat4A::from_mat4(self)
+    }
+}
+
+impl GMat4<f64> {
+    /// Converts `self` to a [`Mat4A`].
+    #[inline]
+    #[must_use]
+    pub fn to_mat4a(self) -> Mat4A {
+        Mat4A::from_mat4(self.cast())
     }
 }
 

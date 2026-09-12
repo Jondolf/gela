@@ -1,8 +1,12 @@
 //! Affine transformations for representing translation, rotation, scaling, and shearing.
 
+mod affine2a;
+mod affine3a;
 mod gaffine2;
 mod gaffine3;
 
+pub use affine2a::Affine2A;
+pub use affine3a::Affine3A;
 pub use gaffine2::GAffine2;
 pub use gaffine3::GAffine3;
 

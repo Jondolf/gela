@@ -7,10 +7,10 @@ use mint::{
 };
 
 use crate::{
-    affine::{GAffine2, GAffine3},
-    matrix::{GMat2, GMat3, GMat4},
-    rotation::{EulerRot, GRot3},
-    vector::{GVec2, GVec3, GVec4},
+    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    rotation::{EulerRot, GRot3, Rot3A},
+    vector::{GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 macro_rules! impl_vector {
@@ -74,6 +74,38 @@ impl<T: Real> From<GRot3<T>> for Quaternion<T> {
     }
 }
 
+macro_rules! impl_aligned_mint {
+    ($aligned:ident, $generic:ident, $mint:ident) => {
+        impl From<$mint<f32>> for $aligned {
+            #[inline]
+            fn from(value: $mint<f32>) -> Self {
+                $generic::from(value).into()
+            }
+        }
+        impl From<$aligned> for $mint<f32> {
+            #[inline]
+            fn from(value: $aligned) -> Self {
+                $generic::from(value).into()
+            }
+        }
+    };
+}
+
+impl_aligned_mint!(Vec3A, GVec3, Vector3);
+impl_aligned_mint!(Vec3A, GVec3, Point3);
+impl_aligned_mint!(Vec4A, GVec4, Vector4);
+impl_aligned_mint!(Rot3A, GRot3, Quaternion);
+
+impl IntoMint for Vec3A {
+    type MintType = Vector3<f32>;
+}
+impl IntoMint for Vec4A {
+    type MintType = Vector4<f32>;
+}
+impl IntoMint for Rot3A {
+    type MintType = Quaternion<f32>;
+}
+
 macro_rules! impl_matrix {
     (
         $ty:ident as $value:ident,
@@ -127,6 +159,44 @@ impl_matrix!(
     RowMatrix2,
     |c| GMat2::from_cols(c[0], c[1]),
 );
+
+macro_rules! impl_aligned_matrix_mint {
+    ($aligned:ident, $generic:ident, $column:ident, $row:ident) => {
+        impl IntoMint for $aligned {
+            type MintType = $column<f32>;
+        }
+        impl From<$column<f32>> for $aligned {
+            #[inline]
+            fn from(value: $column<f32>) -> Self {
+                $generic::from(value).into()
+            }
+        }
+        impl From<$aligned> for $column<f32> {
+            #[inline]
+            fn from(value: $aligned) -> Self {
+                $generic::from(value).into()
+            }
+        }
+        impl From<$row<f32>> for $aligned {
+            #[inline]
+            fn from(value: $row<f32>) -> Self {
+                $generic::from(value).into()
+            }
+        }
+        impl From<$aligned> for $row<f32> {
+            #[inline]
+            fn from(value: $aligned) -> Self {
+                $generic::from(value).into()
+            }
+        }
+    };
+}
+
+impl_aligned_matrix_mint!(Mat2A, GMat2, ColumnMatrix2, RowMatrix2);
+impl_aligned_matrix_mint!(Mat3A, GMat3, ColumnMatrix3, RowMatrix3);
+impl_aligned_matrix_mint!(Mat4A, GMat4, ColumnMatrix4, RowMatrix4);
+impl_aligned_matrix_mint!(Affine2A, GAffine2, ColumnMatrix2x3, RowMatrix2x3);
+impl_aligned_matrix_mint!(Affine3A, GAffine3, ColumnMatrix3x4, RowMatrix3x4);
 
 impl_matrix!(
     GMat3 as m,

@@ -25,6 +25,6 @@ mod zerocopy;
 mod unpadded;
 
 #[cfg(feature = "rand")]
-pub use rand::{UniformGVec2, UniformGVec3, UniformGVec4};
+pub use rand::{UniformGVec2, UniformGVec3, UniformGVec4, UniformVec3A, UniformVec4A};
 #[cfg(any(feature = "bytemuck", feature = "zerocopy"))]
 pub use unpadded::UnpaddedElement;

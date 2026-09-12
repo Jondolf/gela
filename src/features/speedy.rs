@@ -2,11 +2,11 @@ use gnum::num::Real;
 use speedy::{Context, Readable, Reader, Writable, Writer};
 
 use crate::{
-    affine::{GAffine2, GAffine3},
-    isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
-    rotation::{GRot2, GRot3},
-    vector::{GVec2, GVec3, GVec4},
+    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
+    isometry::{GIso2, GIso3, Iso3A},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    rotation::{GRot2, GRot3, Rot3A},
+    vector::{BVec3A, BVec4A, GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 macro_rules! impl_speedy {
@@ -68,6 +68,47 @@ macro_rules! impl_speedy {
     };
 }
 
+macro_rules! impl_speedy_aligned {
+    ($ty:ident, $elem:ty, $count:literal, |$value:ident| $to_array:expr, |$array:ident| $from_array:expr) => {
+        impl<'a, C: Context> Readable<'a, C> for $ty
+        where
+            $elem: Readable<'a, C>,
+        {
+            fn read_from<R: Reader<'a, C>>(reader: &mut R) -> Result<Self, C::Error> {
+                let first = reader.read_value()?;
+                let mut $array: [$elem; $count] = [first; $count];
+                for element in $array.iter_mut().skip(1) {
+                    *element = reader.read_value()?;
+                }
+                Ok($from_array)
+            }
+            fn minimum_bytes_needed() -> usize {
+                <$elem as Readable<'a, C>>::minimum_bytes_needed() * $count
+            }
+        }
+        impl<C: Context> Writable<C> for $ty
+        where
+            $elem: Writable<C>,
+        {
+            fn write_to<W: ?Sized + Writer<C>>(&self, writer: &mut W) -> Result<(), C::Error> {
+                let $value = self;
+                let elements: [$elem; $count] = $to_array;
+                for element in &elements {
+                    writer.write_value(element)?;
+                }
+                Ok(())
+            }
+            fn bytes_needed(&self) -> Result<usize, C::Error> {
+                let $value = self;
+                let elements: [$elem; $count] = $to_array;
+                elements
+                    .iter()
+                    .try_fold(0, |size, e| Ok(size + Writable::<C>::bytes_needed(e)?))
+            }
+        }
+    };
+}
+
 impl_speedy!(GVec2<T: Copy>, 2, |v| v.to_array(), |a| GVec2::from_array(a));
 impl_speedy!(GVec3<T: Copy>, 3, |v| v.to_array(), |a| GVec3::from_array(a));
 impl_speedy!(GVec4<T: Copy>, 4, |v| v.to_array(), |a| GVec4::from_array(a));
@@ -94,6 +135,41 @@ impl_speedy!(
         GRot2::from_array([a[0], a[1]]),
         GVec2::from_array([a[2], a[3]]),
     ),
+);
+
+impl_speedy_aligned!(BVec3A, bool, 3, |v| v.to_array(), |a| BVec3A::from_array(a));
+impl_speedy_aligned!(BVec4A, bool, 4, |v| v.to_array(), |a| BVec4A::from_array(a));
+impl_speedy_aligned!(Vec3A, f32, 3, |v| v.to_array(), |a| Vec3A::from_array(a));
+impl_speedy_aligned!(Vec4A, f32, 4, |v| v.to_array(), |a| Vec4A::from_array(a));
+impl_speedy_aligned!(Mat2A, f32, 4, |m| m.to_cols_array(), |a| {
+    Mat2A::from_cols_array(&a)
+});
+impl_speedy_aligned!(Mat3A, f32, 9, |m| m.to_cols_array(), |a| {
+    Mat3A::from_cols_array(&a)
+});
+impl_speedy_aligned!(Mat4A, f32, 16, |m| m.to_cols_array(), |a| {
+    Mat4A::from_cols_array(&a)
+});
+impl_speedy_aligned!(Rot3A, f32, 4, |r| r.to_array(), |a| Rot3A::from_array(a));
+impl_speedy_aligned!(Affine2A, f32, 6, |a| a.to_cols_array(), |a| {
+    Affine2A::from_cols_array(&a)
+});
+impl_speedy_aligned!(Affine3A, f32, 12, |a| a.to_cols_array(), |a| {
+    Affine3A::from_cols_array(&a)
+});
+impl_speedy_aligned!(
+    Iso3A,
+    f32,
+    7,
+    |i| {
+        let [x, y, z, w] = i.rotation.to_array();
+        let [tx, ty, tz] = i.translation.to_array();
+        [x, y, z, w, tx, ty, tz]
+    },
+    |a| Iso3A::from_rotation_translation(
+        Rot3A::from_array([a[0], a[1], a[2], a[3]]),
+        Vec3A::from_array([a[4], a[5], a[6]]),
+    )
 );
 impl_speedy!(
     GIso3<T: Real>,

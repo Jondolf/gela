@@ -1,5 +1,5 @@
-use crate::rotation::GRot3;
 use crate::vector::GVec3;
+use crate::{isometry::Iso3A, rotation::GRot3};
 
 use core::{iter::Product, ops::*};
 
@@ -225,6 +225,24 @@ impl<T: Real> GIso3<T> {
         T: NumCast<U>,
     {
         GIso3::from_rotation_translation(self.rotation.cast(), self.translation.cast())
+    }
+}
+
+impl GIso3<f32> {
+    /// Converts `self` to an [`Iso3A`].
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_iso3a(self) -> Iso3A {
+        Iso3A::from_iso3(self)
+    }
+}
+
+impl GIso3<f64> {
+    /// Converts `self` to an [`Iso3A`].
+    #[inline]
+    #[must_use]
+    pub fn to_iso3a(self) -> Iso3A {
+        Iso3A::from_iso3(self.cast())
     }
 }
 

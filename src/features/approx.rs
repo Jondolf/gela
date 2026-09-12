@@ -2,11 +2,11 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 use gnum::num::Real;
 
 use crate::{
-    affine::{GAffine2, GAffine3},
-    isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
-    rotation::{GRot2, GRot3},
-    vector::{GVec2, GVec3, GVec4},
+    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
+    isometry::{GIso2, GIso3, Iso3A},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    rotation::{GRot2, GRot3, Rot3A},
+    vector::{GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 macro_rules! impl_approx {
@@ -92,6 +92,58 @@ macro_rules! impl_approx {
     };
 }
 
+macro_rules! impl_approx_aligned {
+    ($ty:ident, $count:literal, |$value:ident| $to_array:expr) => {
+        impl AbsDiffEq for $ty {
+            type Epsilon = f32;
+            #[inline]
+            fn default_epsilon() -> f32 {
+                f32::default_epsilon()
+            }
+            #[inline]
+            fn abs_diff_eq(&self, other: &Self, epsilon: f32) -> bool {
+                let $value = self;
+                let a: [f32; $count] = $to_array;
+                let $value = other;
+                let b: [f32; $count] = $to_array;
+                a.iter().zip(&b).all(|(a, b)| a.abs_diff_eq(b, epsilon))
+            }
+        }
+        impl RelativeEq for $ty {
+            #[inline]
+            fn default_max_relative() -> f32 {
+                f32::default_max_relative()
+            }
+            #[inline]
+            fn relative_eq(&self, other: &Self, epsilon: f32, max_relative: f32) -> bool {
+                let $value = self;
+                let a: [f32; $count] = $to_array;
+                let $value = other;
+                let b: [f32; $count] = $to_array;
+                a.iter()
+                    .zip(&b)
+                    .all(|(a, b)| a.relative_eq(b, epsilon, max_relative))
+            }
+        }
+        impl UlpsEq for $ty {
+            #[inline]
+            fn default_max_ulps() -> u32 {
+                f32::default_max_ulps()
+            }
+            #[inline]
+            fn ulps_eq(&self, other: &Self, epsilon: f32, max_ulps: u32) -> bool {
+                let $value = self;
+                let a: [f32; $count] = $to_array;
+                let $value = other;
+                let b: [f32; $count] = $to_array;
+                a.iter()
+                    .zip(&b)
+                    .all(|(a, b)| a.ulps_eq(b, epsilon, max_ulps))
+            }
+        }
+    };
+}
+
 impl_approx!(GVec2<T: Copy>, 2, |v| v.to_array());
 impl_approx!(GVec3<T: Copy>, 3, |v| v.to_array());
 impl_approx!(GVec4<T: Copy>, 4, |v| v.to_array());
@@ -112,6 +164,20 @@ impl_approx!(GIso2<T: Real>, 4, |i| {
     [cos, sin, x, y]
 });
 impl_approx!(GIso3<T: Real>, 7, |i| {
+    let [x, y, z, w] = i.rotation.to_array();
+    let [tx, ty, tz] = i.translation.to_array();
+    [x, y, z, w, tx, ty, tz]
+});
+
+impl_approx_aligned!(Vec3A, 3, |v| v.to_array());
+impl_approx_aligned!(Vec4A, 4, |v| v.to_array());
+impl_approx_aligned!(Mat2A, 4, |m| m.to_cols_array());
+impl_approx_aligned!(Mat3A, 9, |m| m.to_cols_array());
+impl_approx_aligned!(Mat4A, 16, |m| m.to_cols_array());
+impl_approx_aligned!(Rot3A, 4, |r| r.to_array());
+impl_approx_aligned!(Affine2A, 6, |a| a.to_cols_array());
+impl_approx_aligned!(Affine3A, 12, |a| a.to_cols_array());
+impl_approx_aligned!(Iso3A, 7, |i| {
     let [x, y, z, w] = i.rotation.to_array();
     let [tx, ty, tz] = i.translation.to_array();
     [x, y, z, w, tx, ty, tz]

@@ -297,6 +297,24 @@ impl<T: Copy + NumOrd> GVec2<T> {
         self.max(min).min(max)
     }
 
+    /// Returns the horizontal minimum of `self`.
+    ///
+    /// In other words this computes `min(x, y, ..)`.
+    #[inline]
+    #[must_use]
+    pub fn min_element(self) -> T {
+        self.x.min(self.y)
+    }
+
+    /// Returns the horizontal maximum of `self`.
+    ///
+    /// In other words this computes `max(x, y, ..)`.
+    #[inline]
+    #[must_use]
+    pub fn max_element(self) -> T {
+        self.x.max(self.y)
+    }
+
     /// Returns a vector containing the minimum values for each element of `self` and `rhs`,
     /// using [`NumOrd::min_fast`].
     ///
@@ -349,22 +367,36 @@ impl<T: Copy + NumOrd> GVec2<T> {
         self.max_fast(min).min_fast(max)
     }
 
-    /// Returns the horizontal minimum of `self`.
+    /// Returns the horizontal minimum of `self`, using [`NumOrd::min_fast`].
     ///
-    /// In other words this computes `min(x, y, ..)`.
+    /// # Floating-Point Types
+    ///
+    /// This is faster than [`min_element`](Self::min_element), but handles NaN and signed zero differently.
+    /// Given a component of `self`, it _always_ returns the first element that does not compare greater
+    /// than the others, even if any of the values are NaN or if the two values compare equal
+    /// (such as for the case of +0.0 and -0.0).
+    ///
+    /// See [`NumOrd::min_fast`] for more details.
     #[inline]
     #[must_use]
-    pub fn min_element(self) -> T {
-        self.x.min(self.y)
+    pub fn min_element_fast(self) -> T {
+        self.x.min_fast(self.y)
     }
 
-    /// Returns the horizontal maximum of `self`.
+    /// Returns the horizontal maximum of `self`, using [`NumOrd::max_fast`].
     ///
-    /// In other words this computes `max(x, y, ..)`.
+    /// # Floating-Point Types
+    ///
+    /// This is faster than [`max_element`](Self::max_element), but handles NaN and signed zero differently.
+    /// Given a component of `self`, it _always_ returns the first element that does not compare less
+    /// than the others, even if any of the values are NaN or if the two values compare equal
+    /// (such as for the case of +0.0 and -0.0).
+    ///
+    /// See [`NumOrd::max_fast`] for more details.
     #[inline]
     #[must_use]
-    pub fn max_element(self) -> T {
-        self.x.max(self.y)
+    pub fn max_element_fast(self) -> T {
+        self.x.max_fast(self.y)
     }
 }
 
@@ -660,35 +692,150 @@ impl<T: Real> GVec2<T> {
         self - self.floor()
     }
 
-    /// Returns a vector containing `e^self` (the exponential function) for each element of
-    /// `self`.
+    /// Returns a vector containing `e^self` (the exponential function) for each element of `self`.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`exp_stable`](Self::exp_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn exp(self) -> Self {
         Self::new(self.x.exp(), self.y.exp())
     }
 
+    /// Returns a vector containing `e^self` (the exponential function) for each element of `self`,
+    /// with deterministic results.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`exp`](Self::exp) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn exp_stable(self) -> Self {
+        Self::new(self.x.exp_stable(), self.y.exp_stable())
+    }
+
     /// Returns a vector containing `2^self` for each element of `self`.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`exp2_stable`](Self::exp2_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn exp2(self) -> Self {
         Self::new(self.x.exp2(), self.y.exp2())
     }
 
+    /// Returns a vector containing `2^self` for each element of `self`,
+    /// with deterministic results.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`exp2`](Self::exp2) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn exp2_stable(self) -> Self {
+        Self::new(self.x.exp2_stable(), self.y.exp2_stable())
+    }
+
     /// Returns a vector containing the natural logarithm for each element of `self`.
-    /// This returns NaN when the element is negative and negative infinity when the element is zero.
+    /// This returns NaN when the element is negative and negative infinity
+    /// when the element is zero.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`ln_stable`](Self::ln_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn ln(self) -> Self {
         Self::new(self.x.ln(), self.y.ln())
     }
 
+    /// Returns a vector containing the natural logarithm for each element of `self`,
+    /// with deterministic results. This returns NaN when the element is negative
+    /// and negative infinity when the element is zero.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`ln`](Self::ln) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn ln_stable(self) -> Self {
+        Self::new(self.x.ln_stable(), self.y.ln_stable())
+    }
+
     /// Returns a vector containing the base 2 logarithm for each element of `self`.
-    /// This returns NaN when the element is negative and negative infinity when the element is zero.
+    /// This returns NaN when the element is negative and negative infinity
+    /// when the element is zero.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`log2_stable`](Self::log2_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn log2(self) -> Self {
         Self::new(self.x.log2(), self.y.log2())
+    }
+
+    /// Returns a vector containing the base 2 logarithm for each element of `self`,
+    /// with deterministic results. This returns NaN when the element is negative
+    /// and negative infinity when the element is zero.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`log2`](Self::log2) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn log2_stable(self) -> Self {
+        Self::new(self.x.log2_stable(), self.y.log2_stable())
     }
 
     /// Returns a vector containing the square root for each element of `self`.
@@ -700,23 +847,110 @@ impl<T: Real> GVec2<T> {
     }
 
     /// Returns a vector containing the cosine for each element of `self`.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`cos_stable`](Self::cos_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn cos(self) -> Self {
+        Self::new(self.x.cos(), self.y.cos())
+    }
+
+    /// Returns a vector containing the cosine for each element of `self`,
+    /// with deterministic results.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`cos`](Self::cos) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn cos_stable(self) -> Self {
         Self::new(self.x.cos_stable(), self.y.cos_stable())
     }
 
     /// Returns a vector containing the sine for each element of `self`.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`sin_stable`](Self::sin_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn sin(self) -> Self {
+        Self::new(self.x.sin(), self.y.sin())
+    }
+
+    /// Returns a vector containing the sine for each element of `self`,
+    /// with deterministic results.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`sin`](Self::sin) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn sin_stable(self) -> Self {
         Self::new(self.x.sin_stable(), self.y.sin_stable())
     }
 
     /// Returns a tuple of two vectors containing the sine and cosine for each element of `self`.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`sin_cos_stable`](Self::sin_cos_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn sin_cos(self) -> (Self, Self) {
+        let (sin_x, cos_x) = self.x.sin_cos();
+        let (sin_y, cos_y) = self.y.sin_cos();
+
+        (Self::new(sin_x, sin_y), Self::new(cos_x, cos_y))
+    }
+
+    /// Returns a tuple of two vectors containing the sine and cosine for each element of `self`,
+    /// with deterministic results.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`sin_cos`](Self::sin_cos) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn sin_cos_stable(self) -> (Self, Self) {
         let (sin_x, cos_x) = self.x.sin_cos_stable();
         let (sin_y, cos_y) = self.y.sin_cos_stable();
 
@@ -949,9 +1183,37 @@ impl<T: Float> GVec2<T> {
     }
 
     /// Returns a vector containing each element of `self` raised to the power of `n`.
+    ///
+    /// # Unspecified Precision
+    ///
+    /// For some element types (ex: floating-point numbers), the precision of this function
+    /// is non-deterministic. This means it varies by platform, Rust version, and can
+    /// even differ within the same execution from one invocation to the next.
+    ///
+    /// See [`powf_stable`](Self::powf_stable) for a version of this function
+    /// that is guaranteed to be deterministic and returns identical results
+    /// across both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
     #[inline]
     #[must_use]
     pub fn powf(self, n: T) -> Self {
+        Self::new(self.x.powf(n), self.y.powf(n))
+    }
+
+    /// Returns a vector containing each element of `self` raised to the power of `n`,
+    /// with deterministic results.
+    ///
+    /// # Precision
+    ///
+    /// This function is deterministic and returns identical results across
+    /// both scalar and vectorized types at the cost of some precision
+    /// and/or performance.
+    ///
+    /// See [`powf`](Self::powf) for a version of this function that may be
+    /// more precise but can be non-deterministic.
+    #[inline]
+    #[must_use]
+    pub fn powf_stable(self, n: T) -> Self {
         Self::new(self.x.powf_stable(n), self.y.powf_stable(n))
     }
 
@@ -1197,6 +1459,18 @@ impl<T: MaskLike> GVec2<T> {
             1 => self.y = value,
             _ => panic!("index out of bounds"),
         }
+    }
+}
+
+impl GVec2<bool> {
+    /// Returns a bitmask with the lowest 2 bits set from the elements of `self`.
+    ///
+    /// A true element results in a `1` bit and a false element in a `0` bit. Element `x` goes
+    /// into the lowest bit, element `y` into the second-lowest bit, and so on.
+    #[inline]
+    #[must_use]
+    pub const fn bitmask(self) -> u32 {
+        (self.x as u32) | ((self.y as u32) << 1)
     }
 }
 

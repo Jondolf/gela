@@ -2,9 +2,11 @@
 
 mod giso2;
 mod giso3;
+mod iso3a;
 
 pub use giso2::GIso2;
 pub use giso3::GIso3;
+pub use iso3a::Iso3A;
 
 /// A 2D isometry with `f32` components.
 pub type Iso2 = GIso2<f32>;

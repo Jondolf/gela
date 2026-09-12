@@ -1,18 +1,20 @@
-#[cfg(feature = "cuda")]
 use rkyv::munge::munge;
 use rkyv::{
-    Archive, Deserialize, Place, Portable, Serialize, rancor::Fallible,
-    traits::CopyOptimization, traits::NoUndef,
+    Archive, Deserialize, Place, Portable, Serialize, rancor::Fallible, traits::CopyOptimization,
+    traits::NoUndef,
 };
 
 #[cfg(feature = "cuda")]
 use crate::isometry::GIso3;
 use crate::{
-    affine::{Affine2, Affine3, DAffine2, DAffine3},
-    isometry::{DIso2, DIso3, Iso2, Iso3},
-    matrix::{DMat2, DMat3, DMat4, Mat2, Mat3, Mat4},
-    rotation::{DRot2, DRot3, Rot2, Rot3},
-    vector::{DVec2, DVec3, DVec4, IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3, Vec4},
+    affine::{Affine2, Affine2A, Affine3, Affine3A, DAffine2, DAffine3},
+    isometry::{DIso2, DIso3, Iso2, Iso3, Iso3A},
+    matrix::{DMat2, DMat3, DMat4, Mat2, Mat2A, Mat3, Mat3A, Mat4, Mat4A},
+    rotation::{DRot2, DRot3, Rot2, Rot3, Rot3A},
+    vector::{
+        BVec3A, BVec4A, DVec2, DVec3, DVec4, IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3,
+        Vec3A, Vec4, Vec4A,
+    },
 };
 
 macro_rules! impl_rkyv_common {
@@ -74,7 +76,6 @@ macro_rules! impl_rkyv {
     };
 }
 
-#[cfg(feature = "cuda")]
 macro_rules! impl_rkyv_padded {
     ($($ty:ty as $pattern:ident { $($field:ident),* $(,)? }),* $(,)?) => {
         $(
@@ -131,6 +132,21 @@ impl_rkyv!(
 
     Iso2: [f32; 4],
     DIso2: [f64; 4],
+
+    BVec3A: [i32; 4],
+    BVec4A: [i32; 4],
+    Vec3A: [f32; 4],
+    Vec4A: [f32; 4],
+    Mat2A: [f32; 4],
+    Mat3A: [f32; 12],
+    Mat4A: [f32; 16],
+    Rot3A: [f32; 4],
+    Affine3A: [f32; 16],
+    Iso3A: [f32; 8],
+);
+
+impl_rkyv_padded!(
+    Affine2A as Affine2A { matrix2, translation },
 );
 
 #[cfg(not(feature = "cuda"))]

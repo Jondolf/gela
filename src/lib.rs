@@ -58,4 +58,9 @@ mod features;
 #[cfg(any(feature = "bytemuck", feature = "zerocopy"))]
 pub use features::UnpaddedElement;
 #[cfg(feature = "rand")]
-pub use features::{UniformGVec2, UniformGVec3, UniformGVec4};
+pub use features::{UniformGVec2, UniformGVec3, UniformGVec4, UniformVec3A, UniformVec4A};
+
+/// Re-exports for convenience.
+pub mod prelude {
+    pub use crate::{affine::*, isometry::*, matrix::*, rotation::*, vector::*};
+}

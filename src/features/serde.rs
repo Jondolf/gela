@@ -8,11 +8,11 @@ use serde_core::{
 };
 
 use crate::{
-    affine::{GAffine2, GAffine3},
-    isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
-    rotation::{EulerRot, GRot2, GRot3},
-    vector::{GVec2, GVec3, GVec4},
+    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
+    isometry::{GIso2, GIso3, Iso3A},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    rotation::{EulerRot, GRot2, GRot3, Rot3A},
+    vector::{BVec3A, BVec4A, GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 macro_rules! impl_serde {
@@ -83,6 +83,54 @@ macro_rules! impl_serde {
     };
 }
 
+macro_rules! impl_serde_aligned {
+    ($ty:ident, $elem:ty, $count:literal, |$value:ident| $to_array:expr, |$array:ident| $from_array:expr) => {
+        #[doc = concat!("Serializes as a sequence of ", stringify!($count), " elements.")]
+        impl Serialize for $ty {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let $value = self;
+                let elements: [$elem; $count] = $to_array;
+                let mut state = serializer.serialize_tuple_struct(stringify!($ty), $count)?;
+                for element in &elements {
+                    state.serialize_field(element)?;
+                }
+                state.end()
+            }
+        }
+        #[doc = concat!("Deserializes from a sequence of ", stringify!($count), " elements.")]
+        impl<'de> Deserialize<'de> for $ty {
+            fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                struct SeqVisitor;
+                impl<'de> Visitor<'de> for SeqVisitor {
+                    type Value = $ty;
+                    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        f.write_str(concat!(
+                            "a sequence of ",
+                            stringify!($count),
+                            " ",
+                            stringify!($ty),
+                            " elements"
+                        ))
+                    }
+                    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<$ty, A::Error> {
+                        let first = seq
+                            .next_element()?
+                            .ok_or_else(|| Error::invalid_length(0, &self))?;
+                        let mut $array: [$elem; $count] = [first; $count];
+                        for index in 1..$count {
+                            $array[index] = seq
+                                .next_element()?
+                                .ok_or_else(|| Error::invalid_length(index, &self))?;
+                        }
+                        Ok($from_array)
+                    }
+                }
+                deserializer.deserialize_tuple_struct(stringify!($ty), $count, SeqVisitor)
+            }
+        }
+    };
+}
+
 impl_serde!(GVec2<T: Copy>, 2, |v| v.to_array(), |a| GVec2::from_array(a));
 impl_serde!(GVec3<T: Copy>, 3, |v| v.to_array(), |a| GVec3::from_array(a));
 impl_serde!(GVec4<T: Copy>, 4, |v| v.to_array(), |a| GVec4::from_array(a));
@@ -109,6 +157,41 @@ impl_serde!(
         GRot2::from_array([a[0], a[1]]),
         GVec2::from_array([a[2], a[3]]),
     ),
+);
+
+impl_serde_aligned!(BVec3A, bool, 3, |v| v.to_array(), |a| BVec3A::from_array(a));
+impl_serde_aligned!(BVec4A, bool, 4, |v| v.to_array(), |a| BVec4A::from_array(a));
+impl_serde_aligned!(Vec3A, f32, 3, |v| v.to_array(), |a| Vec3A::from_array(a));
+impl_serde_aligned!(Vec4A, f32, 4, |v| v.to_array(), |a| Vec4A::from_array(a));
+impl_serde_aligned!(Mat2A, f32, 4, |m| m.to_cols_array(), |a| {
+    Mat2A::from_cols_array(&a)
+});
+impl_serde_aligned!(Mat3A, f32, 9, |m| m.to_cols_array(), |a| {
+    Mat3A::from_cols_array(&a)
+});
+impl_serde_aligned!(Mat4A, f32, 16, |m| m.to_cols_array(), |a| {
+    Mat4A::from_cols_array(&a)
+});
+impl_serde_aligned!(Rot3A, f32, 4, |r| r.to_array(), |a| Rot3A::from_array(a));
+impl_serde_aligned!(Affine2A, f32, 6, |a| a.to_cols_array(), |a| {
+    Affine2A::from_cols_array(&a)
+});
+impl_serde_aligned!(Affine3A, f32, 12, |a| a.to_cols_array(), |a| {
+    Affine3A::from_cols_array(&a)
+});
+impl_serde_aligned!(
+    Iso3A,
+    f32,
+    7,
+    |i| {
+        let [x, y, z, w] = i.rotation.to_array();
+        let [tx, ty, tz] = i.translation.to_array();
+        [x, y, z, w, tx, ty, tz]
+    },
+    |a| Iso3A::from_rotation_translation(
+        Rot3A::from_array([a[0], a[1], a[2], a[3]]),
+        Vec3A::from_array([a[4], a[5], a[6]]),
+    )
 );
 impl_serde!(
     GIso3<T: Real>,

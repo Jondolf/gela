@@ -1,6 +1,6 @@
 use crate::affine::GAffine3;
 use crate::matrix::{GMat3, GMat4};
-use crate::rotation::{EulerRot, FromEuler, ToEuler};
+use crate::rotation::{EulerRot, FromEuler, Rot3A, ToEuler};
 use crate::vector::{GVec2, GVec3, GVec4};
 
 use core::{
@@ -575,6 +575,7 @@ impl<T: ScalarReal> GRot3<T> {
     }
 }
 
+/// # Operations
 impl<T: Real> GRot3<T> {
     /// Returns the conjugate of `self`. For a unit quaternion,
     /// the conjugate is also the inverse.
@@ -931,6 +932,24 @@ impl<T: Real> GRot3<T> {
         T: NumCast<U>,
     {
         GRot3::from_xyzw(self.x.cast(), self.y.cast(), self.z.cast(), self.w.cast())
+    }
+}
+
+impl GRot3<f32> {
+    /// Converts `self` to a [`Rot3A`].
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_rot3a(self) -> Rot3A {
+        Rot3A::from_quat(self)
+    }
+}
+
+impl GRot3<f64> {
+    /// Converts `self` to a [`Rot3A`].
+    #[inline]
+    #[must_use]
+    pub fn to_rot3a(self) -> Rot3A {
+        Rot3A::from_quat(self.cast())
     }
 }
 

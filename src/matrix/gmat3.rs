@@ -1,4 +1,4 @@
-use crate::matrix::{GMat2, GMat4};
+use crate::matrix::{GMat2, GMat4, Mat3A};
 use crate::rotation::{EulerRot, FromEuler, GRot3, ToEuler};
 use crate::vector::{GVec2, GVec3, Vec3Swizzles, Vec4Swizzles};
 
@@ -814,6 +814,24 @@ impl<T: Real> GMat3<T> {
         T: NumCast<U>,
     {
         GMat3::from_cols(self.x_axis.cast(), self.y_axis.cast(), self.z_axis.cast())
+    }
+}
+
+impl GMat3<f32> {
+    /// Converts `self` to a [`Mat3A`].
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_mat3a(self) -> Mat3A {
+        Mat3A::from_mat3(self)
+    }
+}
+
+impl GMat3<f64> {
+    /// Converts `self` to a [`Mat3A`].
+    #[inline]
+    #[must_use]
+    pub fn to_mat3a(self) -> Mat3A {
+        Mat3A::from_mat3(self.cast())
     }
 }
 

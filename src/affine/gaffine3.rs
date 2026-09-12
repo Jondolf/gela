@@ -1,3 +1,4 @@
+use crate::affine::Affine3A;
 use crate::matrix::{GMat3, GMat4};
 use crate::rotation::GRot3;
 use crate::vector::{GVec3, Vec4Swizzles};
@@ -524,6 +525,24 @@ impl<T: Real> GAffine3<T> {
             matrix3: self.matrix3.cast(),
             translation: self.translation.cast(),
         }
+    }
+}
+
+impl GAffine3<f32> {
+    /// Converts `self` to an [`Affine3A`].
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_affine3a(self) -> Affine3A {
+        Affine3A::from_affine3(self)
+    }
+}
+
+impl GAffine3<f64> {
+    /// Converts `self` to an [`Affine3A`].
+    #[inline]
+    #[must_use]
+    pub fn to_affine3a(self) -> Affine3A {
+        Affine3A::from_affine3(self.cast())
     }
 }
 

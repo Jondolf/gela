@@ -1,4 +1,4 @@
-use crate::matrix::GMat3;
+use crate::matrix::{GMat3, Mat2A};
 use crate::rotation::GRot2;
 use crate::vector::{GVec2, Vec3Swizzles};
 
@@ -488,6 +488,24 @@ impl<T: Real> GMat2<T> {
         T: NumCast<U>,
     {
         GMat2::from_cols(self.x_axis.cast(), self.y_axis.cast())
+    }
+}
+
+impl GMat2<f32> {
+    /// Converts `self` to a [`Mat2A`].
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_mat2a(self) -> Mat2A {
+        Mat2A::from_mat2(self)
+    }
+}
+
+impl GMat2<f64> {
+    /// Converts `self` to a [`Mat2A`].
+    #[inline]
+    #[must_use]
+    pub fn to_mat2a(self) -> Mat2A {
+        Mat2A::from_mat2(self.cast())
     }
 }
 

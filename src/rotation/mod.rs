@@ -3,11 +3,13 @@
 mod euler;
 mod grot2;
 mod grot3;
+mod rot3a;
 
 pub use euler::EulerRot;
 pub(crate) use euler::{FromEuler, ToEuler};
 pub use grot2::{GRot2, grot2};
 pub use grot3::{GRot3, gquat};
+pub use rot3a::{Rot3A, rot3a};
 
 /// A 2D rotation with `f32` components.
 pub type Rot2 = GRot2<f32>;

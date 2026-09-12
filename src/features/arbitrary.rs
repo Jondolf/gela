@@ -2,11 +2,11 @@ use arbitrary::{Arbitrary, Result, Unstructured};
 use gnum::num::Real;
 
 use crate::{
-    affine::{GAffine2, GAffine3},
-    isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
-    rotation::{GRot2, GRot3},
-    vector::{GVec2, GVec3, GVec4},
+    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
+    isometry::{GIso2, GIso3, Iso3A},
+    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
+    rotation::{GRot2, GRot3, Rot3A},
+    vector::{BVec3A, BVec4A, GVec2, GVec3, GVec4, Vec3A, Vec4A},
 };
 
 macro_rules! impl_arbitrary {
@@ -21,6 +21,20 @@ macro_rules! impl_arbitrary {
                 Ok($from_array)
             }
 
+            fn size_hint(depth: usize) -> (usize, Option<usize>) {
+                <[$elem; $count] as Arbitrary<'a>>::size_hint(depth)
+            }
+        }
+    };
+}
+
+macro_rules! impl_arbitrary_aligned {
+    ($ty:ident, $elem:ty, $count:literal, |$array:ident| $from_array:expr) => {
+        impl<'a> Arbitrary<'a> for $ty {
+            fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+                let $array: [$elem; $count] = u.arbitrary()?;
+                Ok($from_array)
+            }
             fn size_hint(depth: usize) -> (usize, Option<usize>) {
                 <[$elem; $count] as Arbitrary<'a>>::size_hint(depth)
             }
@@ -51,6 +65,21 @@ impl_arbitrary!(GIso3<T: Real>, 7, |a| GIso3::from_rotation_translation(
     GVec3::from_array([a[4], a[5], a[6]]),
 ));
 
+impl_arbitrary_aligned!(BVec3A, bool, 3, |a| BVec3A::from_array(a));
+impl_arbitrary_aligned!(BVec4A, bool, 4, |a| BVec4A::from_array(a));
+impl_arbitrary_aligned!(Vec3A, f32, 3, |a| Vec3A::from_array(a));
+impl_arbitrary_aligned!(Vec4A, f32, 4, |a| Vec4A::from_array(a));
+impl_arbitrary_aligned!(Mat2A, f32, 4, |a| Mat2A::from_cols_array(&a));
+impl_arbitrary_aligned!(Mat3A, f32, 9, |a| Mat3A::from_cols_array(&a));
+impl_arbitrary_aligned!(Mat4A, f32, 16, |a| Mat4A::from_cols_array(&a));
+impl_arbitrary_aligned!(Rot3A, f32, 4, |a| Rot3A::from_array(a));
+impl_arbitrary_aligned!(Affine2A, f32, 6, |a| Affine2A::from_cols_array(&a));
+impl_arbitrary_aligned!(Affine3A, f32, 12, |a| Affine3A::from_cols_array(&a));
+impl_arbitrary_aligned!(Iso3A, f32, 7, |a| Iso3A::from_rotation_translation(
+    Rot3A::from_array([a[0], a[1], a[2], a[3]]),
+    Vec3A::from_array([a[4], a[5], a[6]]),
+));
+
 #[cfg(test)]
 mod tests {
     use arbitrary::{Arbitrary, Unstructured};
@@ -65,7 +94,12 @@ mod tests {
 
     fn f32_bytes() -> [u8; 16 * size_of::<f32>()] {
         let mut bytes = [0_u8; 16 * size_of::<f32>()];
-        for (index, chunk) in bytes.chunks_exact_mut(size_of::<f32>()).enumerate() {
+        for (index, chunk) in bytes
+            .as_chunks_mut::<{ size_of::<f32>() }>()
+            .0
+            .iter_mut()
+            .enumerate()
+        {
             chunk.copy_from_slice(&((index + 1) as f32).to_le_bytes());
         }
         bytes

@@ -3,7 +3,7 @@ name = "gela"
 version = "0.1.0"
 edition = "2024"
 authors = ["Joona Aalto <jondolf.dev@gmail.com>"]
-description = "Generic linear algebra with wide SIMD support"
+description = "Generic linear algebra with SIMD and determinism"
 repository = "https://github.com/Jondolf/gela"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
@@ -16,14 +16,14 @@ default = []
 # Enables approximate equality comparisons with `approx`
 approx = ["dep:approx"]
 
-# Enables arbitrary structured value generation with `arbitrary`
+# Enables generation of arbitrary values with `arbitrary`
 arbitrary = ["dep:arbitrary"]
 
 # Enables validation of archived types with `bytecheck`
 bytecheck = ["rkyv/bytecheck"]
 
 # Enables casting types to and from bytes with `bytemuck`
-bytemuck = ["dep:bytemuck"]
+bytemuck = ["dep:bytemuck", "gimd/bytemuck"]
 
 # Enables alignment of types to match CUDA requirements
 cuda = []
@@ -35,7 +35,7 @@ encase = ["dep:encase"]
 mint = ["dep:mint"]
 
 # Enables nightly portable_simd support
-portable_simd = ["gnum/portable_simd", "bytemuck?/nightly_portable_simd"]
+portable_simd = ["bytemuck?/nightly_portable_simd", "gimd/portable_simd"]
 
 # Enables random sampling of types with `rand`
 rand = ["dep:rand"]
@@ -50,16 +50,18 @@ serde = ["dep:serde_core"]
 speedy = ["dep:speedy"]
 
 # Enables casting types to and from bytes with `zerocopy`
-zerocopy = ["dep:zerocopy", "dep:zerocopy-derive"]
+zerocopy = ["dep:zerocopy", "dep:zerocopy-derive", "gimd/zerocopy"]
 
 [dependencies]
-gnum = { path = "../gnum", features = ["portable_simd"] }
+gnum = { path = "../gnum" }
+gimd = { path = "../gnum/gimd" }
 
 # Optional dependencies for features
 approx = { version = "0.5", optional = true, default-features = false }
 arbitrary = { version = "1.4.2", optional = true, default-features = false }
 bytemuck = { version = "1", optional = true, default-features = false, features = [
     "aarch64_simd",
+    "derive",
     "wasm_simd",
 ] }
 encase = { version = "0.12", optional = true, default-features = false }
@@ -74,9 +76,6 @@ zerocopy = { version = "0.8", optional = true, default-features = false, feature
 zerocopy-derive = { version = "0.8", optional = true, default-features = false }
 
 [dev-dependencies]
-# For now, we use portable_simd here, will be removed later
-gela = { path = ".", features = ["portable_simd"] }
-
 # For testing the implementations of optional dependencies
 rkyv = { version = "0.8", default-features = false, features = ["alloc"] }
 serde_json = "1.0"

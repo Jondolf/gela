@@ -187,12 +187,11 @@ mod tests {
     #[cfg(not(feature = "cuda"))]
     test_pod!(diso3_pod, DIso3);
 
-    #[cfg(feature = "portable_simd")]
     #[test]
     fn simd_vec4() {
         use crate::vector::GVec4;
 
-        type Vec4x4 = GVec4<gnum::f32x4>;
+        type Vec4x4 = GVec4<gimd::f32x4>;
 
         let bytes = [0xAB_u8; size_of::<Vec4x4>()];
         let value = bytemuck::pod_read_unaligned::<Vec4x4>(&bytes);
