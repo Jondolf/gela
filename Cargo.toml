@@ -7,8 +7,16 @@ description = "Generic linear algebra with SIMD and determinism"
 repository = "https://github.com/Jondolf/gela"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-keywords = ["gamedev", "math", "matrix", "vector", "quaternion"]
-categories = ["game-engines"]
+keywords = [
+    "gamedev",
+    "math",
+    "matrix",
+    "vector",
+    "quaternion",
+    "simd",
+    "determinism",
+]
+categories = ["mathematics", "game-engines", "no-std"]
 
 [features]
 default = ["std", "wide"]
