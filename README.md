@@ -6,36 +6,43 @@ A generic linear algebra library for games and graphics.
 
 ## Features
 
-- Generic element types using `gnum`
+- Generic element types using [`gnum`]
 - Vectors: `GVec2`, `GVec3`, and `GVec4` (real numbers, integers, booleans)
 - Square matrices: `GMat2`, `GMat3`, `GMat4` (real numbers)
 - Rotations: `GRot2`, `GRot3` (real numbers)
 - Isometries: `GIso2`, `GIso3` (real numbers)
 - Affine transformations: `GAffine2`, `GAffine3` (real numbers)
 - Ergonomic type aliases like `Vec3` (`f32`) and `DVec3` (`f64`)
-- [AoSoA]-style wide [SIMD] using `wide` on stable Rust or `core::simd` on nightly Rust
+- Narrow [SIMD] ([Aos][AoSoA]) with types like `Vec3A`
+- Wide [SIMD] ([SoA][AoSoA]) with types like `Vec3x4`
 - Cross-platform determinism
+- `no_std` support
 
-[AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+[`gnum`]: https://crates.io/crates/gnum
 [SIMD]: https://en.wikipedia.org/wiki/Single_instruction,_multiple_data
+[AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
 
 ## Table of Contents
 
 - [Getting Started](#getting-started)
 - [Generic Numerics](#generic-numerics)
-- [Wide SIMD](#wide-simd)
+- [SIMD](#wide-simd)
+    - [Narrow SIMD](#narrow-simd)
+    - [Wide SIMD](#wide-simd)
     - [Example: Ray-Sphere Intersections](#example-ray-sphere-intersections)
     - [Generic SIMD](#generic-simd)
+    - [SIMD Backends](#simd-backends)
 - [Cross-Platform Determinism](#cross-platform-determinism)
-- [Does it _Really_ Work?](#does-it-really-work)
+- [Feature Flags](#feature-flags)
 
 ## Getting Started
 
-Add `gela` as a dependency to your `Cargo.toml`:
+Add `gela` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-gela = { git = "https://github.com/Jondolf/gela" }
+# Replace `*` with the latest version
+gela = "*"
 ```
 
 Now, you can start writing math! A simple example is integrating the equations
@@ -58,11 +65,11 @@ fn integrate_movement(
 ```
 
 Things get interesting when we start using the generic features provided by `gela`.
-For this, you'll want to also add the `gnum` crate.
+For this, you'll want to also add the [`gnum`] crate.
 
 ## Generic Numerics
 
-`gela` uses `gnum` for generic numeric traits like `Num`, `Real`, `Int`, and `Float`.
+`gela` uses [`gnum`] for generic numeric traits like `Num`, `Real`, `Int`, and `Float`.
 This makes it possible to write highly reusable math code, like this generic axis-aligned
 bounding box type:
 
@@ -84,24 +91,30 @@ impl<T: Num> Aabb {
 ```
 
 The above is still fairly standard stuff. Where `gela` starts to stand out
-is its support of wide SIMD, and being generic over scalar and SIMD math.
+is its support of SIMD, and being generic over scalar and SIMD math.
 
-## Wide SIMD
+## SIMD
 
 SIMD stands for [_Single Instruction, Multiple Data_][SIMD]. It allows you to perform
 the same operation on multiple pieces of data at the same time, which can often
 lead to significant performance improvements for numerical computations.
 
-Some libraries like [`glam`] support "horizontal" SIMD with types like [`Vec3A`],
-where calculations are still performed on one piece of data at a time, but some internal
-calculations leverage SIMD instructions. This can improve performance in some cases,
-while allowing code to be written in familiar [AoS (Array of Structures)][AoSoA] fashion:
+SIMD comes in two flavors: **wide SIMD** ([SoA][AoSoA]), where multiple work units (ex: vectors)
+are processed simultaneously across SIMD lanes, and **narrow SIMD** ([AoS][AoSoA]),
+where for example a 3D vector is put into a SIMD register, and standard vector math
+is expressed using SIMD intrinsics. `gela` supports both flavors!
+
+### Narrow SIMD
+
+**Narrow SIMD**, also known as "horizontal" SIMD, is supported with SIMD-aligned types
+like `Vec3A`, where a single vector is held in one SIMD register, and mathematical
+operations exploit SIMD intrinsics wherever possible. This makes some common methods faster,
+while allowing programs to be written in typical [Array of Structures (AoS)][AoSoA] fashion:
 
 ```rust
-use glam::Vec3A;
+use gela::vector::Vec3A;
 
-// Vec3A is aligned to 16 bytes, and stores a data type like __m128 (x86, SSE)
-// on supported platforms, using hardware intrinsics for some operations.
+// Vec3A stores its components in one 128-bit SIMD register
 struct PhysicsObject {
     position: Vec3A,
     velocity: Vec3A,
@@ -109,14 +122,34 @@ struct PhysicsObject {
 }
 ```
 
-`gela` instead supports "vertical" SIMD, more commonly known as wide SIMD.
-Here, data is laid out in [AoSoA (Array of Structures of Arrays)][AoSoA] fashion,
-where for example an `f32x4` stores four `f32` values in one 128-bit SIMD register,
+One downside is that storing a 128-bit SIMD register requires 16-byte alignment,
+which results in wasted padding on some types:
+
+| Type    | `f32` bytes | Align bytes | Size bytes | Padding bytes |
+| ------- | ----------- | ----------- | ---------- | ------------- |
+| `Vec3`  | 12          | 4           | 12         | 0             |
+| `Vec3A` | 12          | 16          | 16         | 4             |
+| `Mat3`  | 36          | 4           | 36         | 0             |
+| `Mat3A` | 36          | 16          | 48         | 12            |
+
+Additionally, methods that do not benefit from SIMD intrinsics can be slower,
+as pulling individual elements out of SIMD registers is more expensive than direct
+field access. Always measure whether the SIMD-aligned types are actually faster
+for your application.
+
+This approach to SIMD is inspired by [`glam`].
+
+[`glam`]: https://github.com/bitshifter/glam-rs
+
+### Wide SIMD
+
+**Wide SIMD**, also known as "vertical" SIMD, lays out data in [SoA (Structures of Arrays)][AoSoA]
+fashion, where for example an `f32x4` stores four `f32` values in one 128-bit SIMD register,
 and a `Vec3x4` stores an `f32x4` for each of its coordinates:
 
 ```rust
 use gela::vector::Vec3x4;
-use gnum::f32x4;
+use gimd::f32x4; // See "SIMD Backends" section
 
 struct PhysicsObjectWide {
     position: Vec3x4,
@@ -125,14 +158,13 @@ struct PhysicsObjectWide {
 }
 ```
 
-Wide SIMD can provide much greater performance gains, but often requires
-restructuring algorithms to be more easily vectorizable and have minimal branching.
-Let's take a look at a more complicated example.
+This allows algorithms to operate on several physics objects at once,
+providing a high level of vectorization.
 
-[SIMD]: https://en.wikipedia.org/wiki/Single_instruction,_multiple_data
-[`glam`]: https://github.com/bitshifter/glam-rs
-[`Vec3A`]: https://docs.rs/glam/latest/glam/f32/struct.Vec3A.html
-[AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+Wide SIMD can provide much greater performance gains than narrow SIMD,
+but often requires restructuring algorithms to operate in batches
+and have minimal branching. This is demonstrated in more detail
+in the following example.
 
 ### Example: Ray-Sphere Intersections
 
@@ -170,10 +202,24 @@ fn ray_sphere(
 ```
 
 In search of better performance for your software ray-tracer, you turn to SIMD to see
-whether you can vectorize the algorithm. In particular, you want to cast 4 different rays
-at 4 different spheres at a time.
+whether you can vectorize the algorithm. One option is to use _narrow SIMD_ via `Vec3A`:
 
-The first step is to convert the types to their SIMD versions:
+```rust
+fn ray_sphere(
+    ray_origin: Vec3A,
+    ray_dir: Vec3A,
+    sphere_origin: Vec3A,
+    sphere_radius_squared: f32,
+) -> f32 {
+    todo!()
+}
+```
+
+This requires no other changes to the algorithm, but only helps by a small amount.
+You want to go even further. With _wide SIMD_, you could cast 4 different rays
+at 4 different spheres at a time!
+
+The first step is to convert the types to their wide versions:
 
 ```rust
 // Note: Vec3x4 is a type alias for GVec3<f32x4>
@@ -217,15 +263,15 @@ if discriminant > 0.0 {
 }
 ```
 
-We cannot use if statements directly with SIMD, because for some lanes, the condition
-could be true, while for others it may be false. The common solution is to essentially compute
-the results for both branches, and then use masks to select the correct values for each SIMD lane
-based on the comparison. The vectorized version of the above code ends up looking like this:
+We cannot use if-statements directly with SIMD, because for some lanes, the condition
+could be true, while for others it may be false. The common solution is to compute the results
+for both branches, and then use masks to select the correct values for each SIMD lane based on
+the comparison. The vectorized version of the above code ends up looking like this:
 
 ```rust
 // Outer condition
 let is_discriminant_positive = discriminant.num_gt(f32x4::ZERO);
-let discriminant_sqrt = discriminant.simd_sqrt();
+let discriminant_sqrt = discriminant.sqrt();
 
 // Inner condition with t1, combined with outer condition
 let t1 = -b - discriminant_sqrt;
@@ -268,15 +314,9 @@ fn ray_sphere(
 }
 ```
 
-The vectorized code is actually fewer lines (19) than the original code (23),
-but arguably a bit harder to follow. Effective vectorization often requires restructuring
-your algorithms in this way to replace branches with masks, or to eliminate them altogether.
-
-In theory, the vectorized code has to do more work, as it unconditionally evaluates _both_ branches.
-Still, it ends up being faster in practice thanks to the use of SIMD instructions. On a 13th Gen Intel
-Core i7-13700F processor, for 12k rays cast against 12k spheres, I get the following numbers:
-
-TODO
+The vectorized code is actually fewer lines (19) than the original (23), but arguably
+a bit harder to follow. Effective vectorization often requires restructuring your algorithms
+in this way to replace branches with masks, or to eliminate them altogether.
 
 This example used concrete types like `f32x4`. But what if you wanted to be generic over SIMD targets,
 or even generalize across both scalar and SIMD math?
@@ -285,7 +325,7 @@ or even generalize across both scalar and SIMD math?
 
 ### Generic SIMD
 
-[Remember](#generic-numerics) the numeric traits provided by `gnum`, like `Num`, `Real`,
+[Remember](#generic-numerics) the numeric traits provided by [`gnum`], like `Num`, `Real`,
 `Int`, and `Float`? They are also implemented for SIMD types! Any generic algorithm
 that you write using them will _just work_ for both scalar and SIMD math types.
 
@@ -317,15 +357,16 @@ fn ray_sphere<T: Real>(
 }
 ```
 
-The _only_ change we had to make is replace the concrete `f32x4` type with a generic
-real number `T`. Now, the algorithm works for `f32`, `f64`, `f32x4`, `f64x2`,
+The _only_ change we had to make is to replace the vector and float types with generic versions
+using a `Real` number `T`. Now, the algorithm works for `f32`, `f64`, `f32x4`, `f32x8`, `f64x2`,
 or any other type that implements `Real`. Lovely!
 
-You might be wondering if all generic code now needs to use masks instead of simple branches.
-The answer is no: for scalar code, you may use traits like `ScalarReal` instead.
+You might be wondering whether all generic code now needs to use masks instead of simple branches.
+The answer is no: for scalar code, you may use traits like `ScalarReal` instead, which makes
+conditions return `bool` values like normal.
 
 ```rust
-// This cannot be used with SIMD types, but it can use branches like normal.
+// This cannot be used with SIMD types, but it can use branches and booleans like normal.
 fn ray_sphere<T: ScalarReal>(
     ray_origin: Vec3<T>,
     ray_dir: Vec3<T>,
@@ -353,38 +394,69 @@ fn ray_sphere<T: ScalarReal>(
 }
 ```
 
+Note that the [narrow SIMD](#narrow-simd) types such as `Vec3A` are concrete types
+due to their specialized implementation, and do not support generic numeric types.
+
+### SIMD Backends
+
+Currently, three different portable SIMD implementations are officially supported by [`gnum`]
+and can be used in `gela` types:
+
+- [`wide`] provides concrete types like `f32x4` and `f64x2`, and works on both stable and nightly Rust.
+- [`core::simd`] provides generic types like `Simd<T, N>` and `Mask<T, N>`, but works only on nightly Rust.
+- [`gimd`] provides generic types like `Simd<T, N>` and `Mask<T, N>`, and works on both stable and nightly Rust
+  by wrapping `wide` or `core::simd` types depending on features.
+
+Type aliases like `Vec3x4` in `gela` use `gimd`, as it allows choosing between `wide`
+and `core::simd` as the underlying implementation based on feature flags, works on
+both stable and nightly Rust, and integrates best with `gnum`. However, the types
+provided by `wide` and `core::simd` can also be used directly with the generic types
+such as `GVec3<T>` if desired.
+
+The [narrow SIMD](#narrow-simd) types also internally use `gimd`,
+and choose the SIMD backend based on the `wide` and `portable_simd` features.
+
+[`core::simd`]: https://doc.rust-lang.org/core/simd/index.html
+[`wide`]: https://crates.io/crates/wide
+[`gimd`]: https://crates.io/crates/gimd
+
 ## Cross-Platform Determinism
 
-For certain applications, it can be crucial that mathematical operations return bit-for-bit
-identical results across calls and platforms. Furthermore, it can also be important
-that scalar math produces the exact same results as SIMD math. This way, a physics engine
-can produce identical simulation across machines, while still leveraging SIMD optimizations.
+For certain applications, it can be crucial that mathematical operations return bit-identical
+results across calls and platforms. Furthermore, it can also be important that scalar math
+produces the exact same results as SIMD math. This way, a physics engine can produce identical
+simulations across machines, while still leveraging SIMD optimizations.
 
 `gela` supports cross-platform deterministic math with identical results across scalar and SIMD
-types supported by `gnum` on all IEEE-754 compliant hardware. This is achieved by using custom-made
-versions of otherwise non-deterministic methods, such as transcendental operations (`sin`, `cos`,
-`atan2`, and so on). These custom methods are suffixed with `_stable`, for example `sin_stable`.
-The performance effect is typically minimal, or for some operations even positive.
+types on all IEEE-754 compliant hardware _by default_. This is possible thanks to [`gnum`] providing
+custom-made portable versions of otherwise non-deterministic methods, such as transcendental operations
+(`sin`, `cos`, `atan2`, and so on). These custom methods are suffixed with `_stable`, for example
+`sin_stable`. The performance difference compared to native operations is typically minimal,
+or for some operations even positive, especially for SIMD types.
 
-## Does it _Really_ Work?
+See the documentation of [`gnum`] for more information about its determinism guarantees.
 
-Whether or not this style of generic math suits you depends on the application.
+## Feature Flags
 
-I originally built `gela` and `gnum` for my physics engine [Avian] in order to optimize
-the contact solver with wide SIMD. I had four major goals:
+| Feature         | Description                                                                       |
+| --------------- | --------------------------------------------------------------------------------- |
+| `std`           | Standard library math routines instead of portable approximations                 |
+| `wide`          | [Narrow SIMD](#narrow-simd) support based on `wide`, working on stable Rust       |
+| `portable_simd` | [Narrow SIMD](#narrow-simd) support based on `core::simd`, requiring nightly Rust |
+| `approx`        | Approximate equality comparisons with `approx`                                    |
+| `arbitrary`     | Arbitrary structured value generation with `arbitrary`                            |
+| `bytecheck`     | Validation of archived types with `bytecheck`, implies `rkyv`                     |
+| `bytemuck`      | Casting types to and from bytes with `bytemuck`                                   |
+| `cuda`          | Alignment of types matching the requirements of CUDA                              |
+| `encase`        | Writing types into and reading them from GPU buffers with `encase`                |
+| `mint`          | Conversion to and from the interoperability types of `mint`                       |
+| `rand`          | Random sampling of types with `rand`                                              |
+| `rkyv`          | Zero-copy serialization and deserialization with `rkyv`                           |
+| `serde`         | Serialization and deserialization with `serde`                                    |
+| `speedy`        | Serialization and deserialization with `speedy`                                   |
+| `zerocopy`      | Casting types to and from bytes with `zerocopy`                                   |
 
-1. Math code should look as close as possible to normal Rust math with concrete types,
-   with trivial trait bounds.
-2. SIMD code must be able to choose the optimal target, and be generic enough
-   to not require writing code manually for each target or lane count.
-3. SIMD must work on both stable and nightly toolchains.
-4. Scalar and SIMD math must support cross-platform determinism and have methods
-   that produce identical results for all relevant operations.
-
-No existing crate I found fulfilled all four of these. Many, _many_ iterations later,
-I ended up with `gela` and `gnum`. And for my needs, they fit the mold perfectly!
-
-[Avian]: https://github.com/avianphysics/avian
+The default features are `std` and `wide`.
 
 ## Acknowledgments
 
@@ -396,7 +468,7 @@ The [`ultraviolet`] crate was also a useful reference for AoSoA-style SIMD in Ru
 and has a lovely guide on SIMD that was used as inspiration for our guide.
 
 Finally, the [`simba`] crate was a helpful example of existing generic SIMD numerics
-in the Rust ecosystem, and was an early inspiration for the `gnum` crate.
+in the Rust ecosystem, and was an early inspiration for the [`gnum`] crate.
 
 [`simba`]: https://github.com/dimforge/simba
 
