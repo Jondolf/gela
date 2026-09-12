@@ -1,11 +1,15 @@
 //! Affine transformations for representing translation, rotation, scaling, and shearing.
 
+#[cfg(feature = "simd")]
 mod affine2a;
+#[cfg(feature = "simd")]
 mod affine3a;
 mod gaffine2;
 mod gaffine3;
 
+#[cfg(feature = "simd")]
 pub use affine2a::Affine2A;
+#[cfg(feature = "simd")]
 pub use affine3a::Affine3A;
 pub use gaffine2::GAffine2;
 pub use gaffine3::GAffine3;

@@ -22,6 +22,7 @@ impl_unpadded_element!(f32, f64, i32, u32, i64, u64, i128, u128);
 #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
 impl_unpadded_element!(isize, usize);
 
+#[cfg(feature = "simd")]
 impl_unpadded_element!(
     gimd::f32x4,
     gimd::f32x8,
@@ -56,6 +57,7 @@ mod tests {
         assert_unpadded::<usize>();
     }
 
+    #[cfg(feature = "simd")]
     #[test]
     fn simd_element_sizes_are_multiples_of_four() {
         assert_unpadded::<gimd::f32x4>();

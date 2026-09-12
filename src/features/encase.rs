@@ -1,18 +1,24 @@
-use encase::{
-    matrix::{AsMutMatrixParts, AsRefMatrixParts, FromMatrixParts, MatrixScalar},
-    private::{CreateFrom, MatrixMetadata, ReadFrom, ShaderSize, ShaderType, WriteInto},
-};
+use encase::matrix::{AsMutMatrixParts, AsRefMatrixParts, FromMatrixParts, MatrixScalar};
+#[cfg(feature = "simd")]
+use encase::private::{CreateFrom, MatrixMetadata, ReadFrom, ShaderSize, ShaderType, WriteInto};
 use gnum::num::Real;
 
 use crate::{
-    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
-    vector::{GVec2, GVec3, GVec4, Vec3A, Vec4A},
+    matrix::{GMat2, GMat3, GMat4},
+    vector::{GVec2, GVec3, GVec4},
+};
+#[cfg(feature = "simd")]
+use crate::{
+    matrix::{Mat2A, Mat3A, Mat4A},
+    vector::{Vec3A, Vec4A},
 };
 
 encase::impl_vector!(2, GVec2<T>; (T: Copy); using AsRef AsMut From);
 encase::impl_vector!(3, GVec3<T>; (T: Copy); using AsRef AsMut From);
 encase::impl_vector!(4, GVec4<T>; (T: Copy); using AsRef AsMut From);
+#[cfg(feature = "simd")]
 encase::impl_vector!(3, Vec3A, f32; using AsRef AsMut From);
+#[cfg(feature = "simd")]
 encase::impl_vector!(4, Vec4A, f32; using AsRef AsMut From);
 
 macro_rules! impl_matrix_parts {
@@ -58,6 +64,7 @@ encase::impl_matrix!(2, 2, GMat2<T>; (T: Real));
 encase::impl_matrix!(3, 3, GMat3<T>; (T: Real));
 encase::impl_matrix!(4, 4, GMat4<T>; (T: Real));
 
+#[cfg(feature = "simd")]
 macro_rules! impl_aligned_matrix {
     ($aligned:ident, $generic:ident) => {
         impl ShaderType for $aligned {
@@ -101,8 +108,11 @@ macro_rules! impl_aligned_matrix {
     };
 }
 
+#[cfg(feature = "simd")]
 impl_aligned_matrix!(Mat2A, GMat2);
+#[cfg(feature = "simd")]
 impl_aligned_matrix!(Mat3A, GMat3);
+#[cfg(feature = "simd")]
 impl_aligned_matrix!(Mat4A, GMat4);
 
 #[cfg(test)]

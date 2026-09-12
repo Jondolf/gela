@@ -1,3 +1,4 @@
+#[cfg(feature = "simd")]
 use crate::affine::Affine3A;
 use crate::matrix::{GMat3, GMat4};
 use crate::rotation::GRot3;
@@ -528,6 +529,7 @@ impl<T: Real> GAffine3<T> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GAffine3<f32> {
     /// Converts `self` to an [`Affine3A`].
     #[inline(always)]
@@ -537,6 +539,7 @@ impl GAffine3<f32> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GAffine3<f64> {
     /// Converts `self` to an [`Affine3A`].
     #[inline]

@@ -4,6 +4,9 @@
 //!
 //! | Feature         | Description                                                          |
 //! | --------------- | -------------------------------------------------------------------- |
+//! | `std`           | Standard library math routines instead of portable approximations    |
+//! | `wide`          | SIMD support using [`wide`] (works on stable Rust)                   |
+//! | `portable_simd` | SIMD support using [`core::simd`] (requires nightly Rust)            |
 //! | `approx`        | Approximate equality comparisons with [`approx`]                     |
 //! | `arbitrary`     | Arbitrary structured value generation with [`arbitrary`]             |
 //! | `bytecheck`     | Validation of archived types with [`bytecheck`], implies `rkyv`      |
@@ -11,16 +14,13 @@
 //! | `cuda`          | Alignment of types matching the requirements of CUDA                 |
 //! | `encase`        | Writing types into and reading them from GPU buffers with [`encase`] |
 //! | `mint`          | Conversion to and from the interoperability types of [`mint`]        |
-//! | `portable_simd` | Support for [`core::simd`] element types, requiring nightly Rust     |
 //! | `rand`          | Random sampling of types with [`rand`]                               |
 //! | `rkyv`          | Zero-copy serialization and deserialization with [`rkyv`]            |
 //! | `serde`         | Serialization and deserialization with [`serde`]                     |
 //! | `speedy`        | Serialization and deserialization with [`speedy`]                    |
 //! | `zerocopy`      | Casting types to and from bytes with [`zerocopy`]                    |
 //!
-//! Types with a fixed minimum alignment, such as [`GVec4`], only support byte casting for
-//! element types that implement `UnpaddedElement`, as smaller element types would leave
-//! padding bytes in them.
+//! The default features are `std` and `wide`.
 //!
 //! [`approx`]: https://docs.rs/approx
 //! [`arbitrary`]: https://docs.rs/arbitrary
@@ -32,6 +32,7 @@
 //! [`rkyv`]: https://docs.rs/rkyv
 //! [`serde`]: https://serde.rs
 //! [`speedy`]: https://docs.rs/speedy
+//! [`wide`]: https://docs.rs/wide
 //! [`zerocopy`]: https://docs.rs/zerocopy
 //! [`GVec4`]: crate::vector::GVec4
 
@@ -46,6 +47,14 @@
 )]
 #![warn(missing_docs)]
 
+#[cfg(all(
+    feature = "simd",
+    not(any(feature = "wide", feature = "portable_simd"))
+))]
+compile_error!(
+    "The `simd` feature is internal. Enable the `wide` or `portable_simd` feature instead"
+);
+
 pub mod affine;
 pub mod isometry;
 pub mod matrix;
@@ -58,7 +67,9 @@ mod features;
 #[cfg(any(feature = "bytemuck", feature = "zerocopy"))]
 pub use features::UnpaddedElement;
 #[cfg(feature = "rand")]
-pub use features::{UniformGVec2, UniformGVec3, UniformGVec4, UniformVec3A, UniformVec4A};
+pub use features::{UniformGVec2, UniformGVec3, UniformGVec4};
+#[cfg(all(feature = "rand", feature = "simd"))]
+pub use features::{UniformVec3A, UniformVec4A};
 
 /// Re-exports for convenience.
 pub mod prelude {

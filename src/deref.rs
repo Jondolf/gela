@@ -1,3 +1,4 @@
+#[cfg(feature = "simd")]
 #[repr(C)]
 pub struct Vec3<T> {
     pub x: T,
@@ -5,6 +6,7 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
+#[cfg(feature = "simd")]
 #[repr(C)]
 pub struct Vec4<T> {
     pub x: T,
@@ -13,6 +15,7 @@ pub struct Vec4<T> {
     pub w: T,
 }
 
+#[cfg(feature = "simd")]
 #[repr(C)]
 pub struct Cols2<V> {
     pub x_axis: V,

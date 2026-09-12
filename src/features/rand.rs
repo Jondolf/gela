@@ -7,12 +7,20 @@ use rand::{
     },
 };
 
+#[cfg(feature = "simd")]
 use crate::{
-    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
-    isometry::{GIso2, GIso3, Iso3A},
-    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
-    rotation::{GRot2, GRot3, Rot3A},
-    vector::{BVec3A, BVec4A, GVec2, GVec3, GVec4, Vec3A, Vec4A},
+    affine::{Affine2A, Affine3A},
+    isometry::Iso3A,
+    matrix::{Mat2A, Mat3A, Mat4A},
+    rotation::Rot3A,
+    vector::{BVec3A, BVec4A, Vec3A, Vec4A},
+};
+use crate::{
+    affine::{GAffine2, GAffine3},
+    isometry::{GIso2, GIso3},
+    matrix::{GMat2, GMat3, GMat4},
+    rotation::{GRot2, GRot3},
+    vector::{GVec2, GVec3, GVec4},
 };
 
 macro_rules! impl_standard_uniform {
@@ -34,6 +42,7 @@ macro_rules! impl_standard_uniform {
     };
 }
 
+#[cfg(feature = "simd")]
 macro_rules! impl_standard_uniform_aligned {
     ($ty:ident, $elem:ty, $count:literal, |$array:ident| $from_array:expr) => {
         impl Distribution<$ty> for StandardUniform
@@ -99,16 +108,26 @@ where
     }
 }
 
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(BVec3A, bool, 3, |a| BVec3A::from_array(a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(BVec4A, bool, 4, |a| BVec4A::from_array(a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Vec3A, f32, 3, |a| Vec3A::from_array(a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Vec4A, f32, 4, |a| Vec4A::from_array(a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Mat2A, f32, 4, |a| Mat2A::from_cols_array(&a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Mat3A, f32, 9, |a| Mat3A::from_cols_array(&a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Mat4A, f32, 16, |a| Mat4A::from_cols_array(&a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Affine2A, f32, 6, |a| Affine2A::from_cols_array(&a));
+#[cfg(feature = "simd")]
 impl_standard_uniform_aligned!(Affine3A, f32, 12, |a| Affine3A::from_cols_array(&a));
 
+#[cfg(feature = "simd")]
 impl Distribution<Rot3A> for StandardUniform {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Rot3A {
@@ -116,6 +135,7 @@ impl Distribution<Rot3A> for StandardUniform {
     }
 }
 
+#[cfg(feature = "simd")]
 impl Distribution<Iso3A> for StandardUniform {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Iso3A {
@@ -218,6 +238,7 @@ impl_sample_uniform!(GVec2<T>, UniformGVec2, [x, y]);
 impl_sample_uniform!(GVec3<T>, UniformGVec3, [x, y, z]);
 impl_sample_uniform!(GVec4<T>, UniformGVec4, [x, y, z, w]);
 
+#[cfg(feature = "simd")]
 macro_rules! impl_sample_uniform_aligned {
     ($ty:ident, $sampler:ident, [$($field:ident),+ $(,)?]) => {
         #[doc = concat!("A [`UniformSampler`] for [`", stringify!($ty), "`] values.")]
@@ -264,7 +285,9 @@ macro_rules! impl_sample_uniform_aligned {
     };
 }
 
+#[cfg(feature = "simd")]
 impl_sample_uniform_aligned!(Vec3A, UniformVec3A, [x, y, z]);
+#[cfg(feature = "simd")]
 impl_sample_uniform_aligned!(Vec4A, UniformVec4A, [x, y, z, w]);
 
 #[cfg(test)]

@@ -187,6 +187,7 @@ mod tests {
     #[cfg(not(feature = "cuda"))]
     test_pod!(diso3_pod, DIso3);
 
+    #[cfg(feature = "simd")]
     #[test]
     fn simd_vec4() {
         use crate::vector::GVec4;

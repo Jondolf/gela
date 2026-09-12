@@ -1,5 +1,7 @@
 use crate::rotation::GRot3;
-use crate::vector::{GVec2, GVec4, Vec3A, Vec4Swizzles};
+#[cfg(feature = "simd")]
+use crate::vector::Vec3A;
+use crate::vector::{GVec2, GVec4, Vec4Swizzles};
 
 use core::{
     iter::{Product, Sum},
@@ -1817,6 +1819,7 @@ impl<T: Copy> GVec3<T> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GVec3<f32> {
     /// Converts `self` to a [`Vec3A`].
     #[inline(always)]
@@ -1826,6 +1829,7 @@ impl GVec3<f32> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GVec3<f64> {
     /// Converts `self` to a [`Vec3A`],
     #[inline]

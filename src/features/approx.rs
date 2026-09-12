@@ -1,12 +1,20 @@
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 use gnum::num::Real;
 
+#[cfg(feature = "simd")]
 use crate::{
-    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
-    isometry::{GIso2, GIso3, Iso3A},
-    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
-    rotation::{GRot2, GRot3, Rot3A},
-    vector::{GVec2, GVec3, GVec4, Vec3A, Vec4A},
+    affine::{Affine2A, Affine3A},
+    isometry::Iso3A,
+    matrix::{Mat2A, Mat3A, Mat4A},
+    rotation::Rot3A,
+    vector::{Vec3A, Vec4A},
+};
+use crate::{
+    affine::{GAffine2, GAffine3},
+    isometry::{GIso2, GIso3},
+    matrix::{GMat2, GMat3, GMat4},
+    rotation::{GRot2, GRot3},
+    vector::{GVec2, GVec3, GVec4},
 };
 
 macro_rules! impl_approx {
@@ -92,6 +100,7 @@ macro_rules! impl_approx {
     };
 }
 
+#[cfg(feature = "simd")]
 macro_rules! impl_approx_aligned {
     ($ty:ident, $count:literal, |$value:ident| $to_array:expr) => {
         impl AbsDiffEq for $ty {
@@ -169,14 +178,23 @@ impl_approx!(GIso3<T: Real>, 7, |i| {
     [x, y, z, w, tx, ty, tz]
 });
 
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Vec3A, 3, |v| v.to_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Vec4A, 4, |v| v.to_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Mat2A, 4, |m| m.to_cols_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Mat3A, 9, |m| m.to_cols_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Mat4A, 16, |m| m.to_cols_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Rot3A, 4, |r| r.to_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Affine2A, 6, |a| a.to_cols_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Affine3A, 12, |a| a.to_cols_array());
+#[cfg(feature = "simd")]
 impl_approx_aligned!(Iso3A, 7, |i| {
     let [x, y, z, w] = i.rotation.to_array();
     let [tx, ty, tz] = i.translation.to_array();

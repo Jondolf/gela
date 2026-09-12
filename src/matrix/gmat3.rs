@@ -1,4 +1,6 @@
-use crate::matrix::{GMat2, GMat4, Mat3A};
+#[cfg(feature = "simd")]
+use crate::matrix::Mat3A;
+use crate::matrix::{GMat2, GMat4};
 use crate::rotation::{EulerRot, FromEuler, GRot3, ToEuler};
 use crate::vector::{GVec2, GVec3, Vec3Swizzles, Vec4Swizzles};
 
@@ -817,6 +819,7 @@ impl<T: Real> GMat3<T> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GMat3<f32> {
     /// Converts `self` to a [`Mat3A`].
     #[inline(always)]
@@ -826,6 +829,7 @@ impl GMat3<f32> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GMat3<f64> {
     /// Converts `self` to a [`Mat3A`].
     #[inline]

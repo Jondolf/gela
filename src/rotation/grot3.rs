@@ -1,6 +1,8 @@
 use crate::affine::GAffine3;
 use crate::matrix::{GMat3, GMat4};
-use crate::rotation::{EulerRot, FromEuler, Rot3A, ToEuler};
+#[cfg(feature = "simd")]
+use crate::rotation::Rot3A;
+use crate::rotation::{EulerRot, FromEuler, ToEuler};
 use crate::vector::{GVec2, GVec3, GVec4};
 
 use core::{
@@ -935,6 +937,7 @@ impl<T: Real> GRot3<T> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GRot3<f32> {
     /// Converts `self` to a [`Rot3A`].
     #[inline(always)]
@@ -944,6 +947,7 @@ impl GRot3<f32> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GRot3<f64> {
     /// Converts `self` to a [`Rot3A`].
     #[inline]

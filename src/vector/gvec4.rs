@@ -1,4 +1,6 @@
-use crate::vector::{GVec2, GVec3, Vec4A};
+#[cfg(feature = "simd")]
+use crate::vector::Vec4A;
+use crate::vector::{GVec2, GVec3};
 
 use core::{
     iter::{Product, Sum},
@@ -1758,6 +1760,7 @@ impl<T: Copy> GVec4<T> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GVec4<f32> {
     /// Converts `self` to a [`Vec4A`].
     #[inline(always)]
@@ -1767,6 +1770,7 @@ impl GVec4<f32> {
     }
 }
 
+#[cfg(feature = "simd")]
 impl GVec4<f64> {
     /// Converts `self` to a [`Vec4A`].
     #[inline]

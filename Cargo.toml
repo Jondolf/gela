@@ -11,31 +11,53 @@ keywords = ["gamedev", "math", "matrix", "vector", "quaternion"]
 categories = ["game-engines"]
 
 [features]
-default = []
+default = ["std", "wide"]
+
+# Enables using the standard library's math routines instead of portable approximations
+std = [
+    "gnum/std",
+    "gimd?/std",
+    "approx?/std",
+    "rand?/std",
+    "rkyv?/std",
+    "serde_core?/std",
+    "zerocopy?/std",
+]
+
+# Enables SIMD support on stable Rust using `wide`
+wide = ["simd", "gimd/wide"]
+
+# Enables SIMD support on nightly Rust using `core::simd`
+portable_simd = [
+    "simd",
+    "gnum/portable_simd",
+    "gimd/portable_simd",
+    "bytemuck?/nightly_portable_simd",
+]
+
+# Internal, implied by `wide` and `portable_simd`
+simd = ["dep:gimd"]
 
 # Enables approximate equality comparisons with `approx`
 approx = ["dep:approx"]
 
 # Enables generation of arbitrary values with `arbitrary`
-arbitrary = ["dep:arbitrary"]
+arbitrary = ["dep:arbitrary", "std"]
 
 # Enables validation of archived types with `bytecheck`
 bytecheck = ["rkyv/bytecheck"]
 
 # Enables casting types to and from bytes with `bytemuck`
-bytemuck = ["dep:bytemuck", "gimd/bytemuck"]
+bytemuck = ["dep:bytemuck", "gimd?/bytemuck"]
 
 # Enables alignment of types to match CUDA requirements
 cuda = []
 
 # Enables writing types into and reading them from GPU buffers with `encase`
-encase = ["dep:encase"]
+encase = ["dep:encase", "std"]
 
 # Enables conversion to and from mint interoperability types
 mint = ["dep:mint"]
-
-# Enables nightly portable_simd support
-portable_simd = ["bytemuck?/nightly_portable_simd", "gimd/portable_simd"]
 
 # Enables random sampling of types with `rand`
 rand = ["dep:rand"]
@@ -47,14 +69,14 @@ rkyv = ["dep:rkyv"]
 serde = ["dep:serde_core"]
 
 # Enables serialization and deserialization with `speedy`
-speedy = ["dep:speedy"]
+speedy = ["dep:speedy", "std"]
 
 # Enables casting types to and from bytes with `zerocopy`
-zerocopy = ["dep:zerocopy", "dep:zerocopy-derive", "gimd/zerocopy"]
+zerocopy = ["dep:zerocopy", "dep:zerocopy-derive", "gimd?/zerocopy"]
 
 [dependencies]
-gnum = { path = "../gnum" }
-gimd = { path = "../gnum/gimd" }
+gnum = { path = "../gnum", default-features = false }
+gimd = { path = "../gnum/gimd", optional = true, default-features = false }
 
 # Optional dependencies for features
 approx = { version = "0.5", optional = true, default-features = false }

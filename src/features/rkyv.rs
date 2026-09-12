@@ -1,3 +1,4 @@
+#[cfg(any(feature = "simd", feature = "cuda"))]
 use rkyv::munge::munge;
 use rkyv::{
     Archive, Deserialize, Place, Portable, Serialize, rancor::Fallible, traits::CopyOptimization,
@@ -7,14 +8,19 @@ use rkyv::{
 #[cfg(feature = "cuda")]
 use crate::isometry::GIso3;
 use crate::{
-    affine::{Affine2, Affine2A, Affine3, Affine3A, DAffine2, DAffine3},
-    isometry::{DIso2, DIso3, Iso2, Iso3, Iso3A},
-    matrix::{DMat2, DMat3, DMat4, Mat2, Mat2A, Mat3, Mat3A, Mat4, Mat4A},
-    rotation::{DRot2, DRot3, Rot2, Rot3, Rot3A},
-    vector::{
-        BVec3A, BVec4A, DVec2, DVec3, DVec4, IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3,
-        Vec3A, Vec4, Vec4A,
-    },
+    affine::{Affine2, Affine3, DAffine2, DAffine3},
+    isometry::{DIso2, DIso3, Iso2, Iso3},
+    matrix::{DMat2, DMat3, DMat4, Mat2, Mat3, Mat4},
+    rotation::{DRot2, DRot3, Rot2, Rot3},
+    vector::{DVec2, DVec3, DVec4, IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3, Vec4},
+};
+#[cfg(feature = "simd")]
+use crate::{
+    affine::{Affine2A, Affine3A},
+    isometry::Iso3A,
+    matrix::{Mat2A, Mat3A, Mat4A},
+    rotation::Rot3A,
+    vector::{BVec3A, BVec4A, Vec3A, Vec4A},
 };
 
 macro_rules! impl_rkyv_common {
@@ -76,6 +82,7 @@ macro_rules! impl_rkyv {
     };
 }
 
+#[cfg(any(feature = "simd", feature = "cuda"))]
 macro_rules! impl_rkyv_padded {
     ($($ty:ty as $pattern:ident { $($field:ident),* $(,)? }),* $(,)?) => {
         $(
@@ -132,7 +139,10 @@ impl_rkyv!(
 
     Iso2: [f32; 4],
     DIso2: [f64; 4],
+);
 
+#[cfg(feature = "simd")]
+impl_rkyv!(
     BVec3A: [i32; 4],
     BVec4A: [i32; 4],
     Vec3A: [f32; 4],
@@ -145,6 +155,7 @@ impl_rkyv!(
     Iso3A: [f32; 8],
 );
 
+#[cfg(feature = "simd")]
 impl_rkyv_padded!(
     Affine2A as Affine2A { matrix2, translation },
 );

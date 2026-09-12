@@ -1,12 +1,20 @@
 use gnum::num::Real;
 use speedy::{Context, Readable, Reader, Writable, Writer};
 
+#[cfg(feature = "simd")]
 use crate::{
-    affine::{Affine2A, Affine3A, GAffine2, GAffine3},
-    isometry::{GIso2, GIso3, Iso3A},
-    matrix::{GMat2, GMat3, GMat4, Mat2A, Mat3A, Mat4A},
-    rotation::{GRot2, GRot3, Rot3A},
-    vector::{BVec3A, BVec4A, GVec2, GVec3, GVec4, Vec3A, Vec4A},
+    affine::{Affine2A, Affine3A},
+    isometry::Iso3A,
+    matrix::{Mat2A, Mat3A, Mat4A},
+    rotation::Rot3A,
+    vector::{BVec3A, BVec4A, Vec3A, Vec4A},
+};
+use crate::{
+    affine::{GAffine2, GAffine3},
+    isometry::{GIso2, GIso3},
+    matrix::{GMat2, GMat3, GMat4},
+    rotation::{GRot2, GRot3},
+    vector::{GVec2, GVec3, GVec4},
 };
 
 macro_rules! impl_speedy {
@@ -68,6 +76,7 @@ macro_rules! impl_speedy {
     };
 }
 
+#[cfg(feature = "simd")]
 macro_rules! impl_speedy_aligned {
     ($ty:ident, $elem:ty, $count:literal, |$value:ident| $to_array:expr, |$array:ident| $from_array:expr) => {
         impl<'a, C: Context> Readable<'a, C> for $ty
@@ -137,26 +146,37 @@ impl_speedy!(
     ),
 );
 
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(BVec3A, bool, 3, |v| v.to_array(), |a| BVec3A::from_array(a));
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(BVec4A, bool, 4, |v| v.to_array(), |a| BVec4A::from_array(a));
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Vec3A, f32, 3, |v| v.to_array(), |a| Vec3A::from_array(a));
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Vec4A, f32, 4, |v| v.to_array(), |a| Vec4A::from_array(a));
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Mat2A, f32, 4, |m| m.to_cols_array(), |a| {
     Mat2A::from_cols_array(&a)
 });
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Mat3A, f32, 9, |m| m.to_cols_array(), |a| {
     Mat3A::from_cols_array(&a)
 });
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Mat4A, f32, 16, |m| m.to_cols_array(), |a| {
     Mat4A::from_cols_array(&a)
 });
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Rot3A, f32, 4, |r| r.to_array(), |a| Rot3A::from_array(a));
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Affine2A, f32, 6, |a| a.to_cols_array(), |a| {
     Affine2A::from_cols_array(&a)
 });
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(Affine3A, f32, 12, |a| a.to_cols_array(), |a| {
     Affine3A::from_cols_array(&a)
 });
+#[cfg(feature = "simd")]
 impl_speedy_aligned!(
     Iso3A,
     f32,
