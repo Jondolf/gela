@@ -1,8 +1,6 @@
 # `gela` 🍨
 
-A generic linear algebra library for games and graphics.
-
-[`glam`]: https://github.com/bitshifter/glam-rs
+Generic linear algebra for games and graphics.
 
 ## Features
 
@@ -65,7 +63,7 @@ fn integrate_movement(
 ```
 
 Things get interesting when we start using the generic features provided by `gela`.
-For this, you'll want to also add the [`gnum`] crate.
+For this, you'll also want to add the [`gnum`] crate.
 
 ## Generic Numerics
 
@@ -170,8 +168,8 @@ in the following example.
 
 _This section is inspired by [`ultraviolet`]._
 
-Consider an algorithm that computes the distance at which a ray intersects a sphere.
-With scalar code, it looks something like this:
+Consider an algorithm that computes the distance at which a ray intersects a sphere,
+assuming that `ray_dir` is normalized. With scalar code, it looks something like this:
 
 ```rust
 fn ray_sphere(
@@ -180,19 +178,19 @@ fn ray_sphere(
     sphere_origin: Vec3,
     sphere_radius_squared: f32,
 ) -> f32 {
-    let oc = ray_origin - sphere_origin;
-    let b = oc.dot(ray_dir);
-    let c = oc.length_squared() - sphere_radius_squared;
-    let discriminant = b * b - c;
+    let offset = ray_origin - sphere_origin;
+    let half_b = offset.dot(ray_dir);
+    let c = offset.length_squared() - sphere_radius_squared;
+    let discriminant = half_b * half_b - c;
 
     if discriminant > 0.0 {
         let discriminant_sqrt = discriminant.sqrt();
 
-        let t1 = -b - discriminant_sqrt;
+        let t1 = -half_b - discriminant_sqrt;
         if t1 > 0.0 {
             t1
         } else {
-            let t2 = -b + discriminant_sqrt;
+            let t2 = -half_b + discriminant_sqrt;
             if t2 > 0.0 { t2 } else { f32::MAX }
         }
     } else {
@@ -236,10 +234,10 @@ fn ray_sphere(
 Simple enough! The next four lines also remain unchanged:
 
 ```rust
-let oc = ray_origin - sphere_origin;
-let b = oc.dot(ray_dir);
-let c = oc.length_squared() - sphere_radius_squared;
-let discriminant = b * b - c;
+let offset = ray_origin - sphere_origin;
+let half_b = offset.dot(ray_dir);
+let c = offset.length_squared() - sphere_radius_squared;
+let discriminant = half_b * half_b - c;
 ```
 
 The tricky part is the branching in this section:
@@ -249,12 +247,12 @@ The tricky part is the branching in this section:
 if discriminant > 0.0 {
     let discriminant_sqrt = discriminant.sqrt();
 
-    let t1 = -b - discriminant_sqrt;
+    let t1 = -half_b - discriminant_sqrt;
     // Or this?
     if t1 > 0.0 {
         t1
     } else {
-        let t2 = -b + discriminant_sqrt;
+        let t2 = -half_b + discriminant_sqrt;
         // Or what about this?
         if t2 > 0.0 { t2 } else { f32::MAX }
     }
@@ -274,16 +272,16 @@ let is_discriminant_positive = discriminant.num_gt(f32x4::ZERO);
 let discriminant_sqrt = discriminant.sqrt();
 
 // Inner condition with t1, combined with outer condition
-let t1 = -b - discriminant_sqrt;
+let t1 = -half_b - discriminant_sqrt;
 let is_t1_valid = t1.num_gt(f32x4::ZERO) & is_discriminant_positive;
 
 // Inner condition with t2, combined with outer condition
-let t2 = -b + discriminant_sqrt;
+let t2 = -half_b + discriminant_sqrt;
 let is_t2_valid = t2.num_gt(f32x4::ZERO) & is_discriminant_positive;
 
 // Select the results matching the conditions
-let t = t2.select(is_t2_valid, f32x4::splat(f32x4::MAX));
-t1.select(is_t1_valid, t)
+let t = is_t2_valid.select(t2, f32x4::MAX);
+is_t1_valid.select(t1, t)
 ```
 
 Finally, we have the complete algorithm:
@@ -295,18 +293,18 @@ fn ray_sphere(
     sphere_origin: Vec3x4,
     sphere_radius_squared: f32x4,
 ) -> f32x4 {
-    let oc = ray_origin - sphere_origin;
-    let b = oc.dot(ray_dir);
-    let c = oc.length_squared() - sphere_radius_squared;
-    let discriminant = b * b - c;
+    let offset = ray_origin - sphere_origin;
+    let half_b = offset.dot(ray_dir);
+    let c = offset.length_squared() - sphere_radius_squared;
+    let discriminant = half_b * half_b - c;
 
     let is_discriminant_positive = discriminant.num_gt(f32x4::ZERO);
     let discriminant_sqrt = discriminant.sqrt();
 
-    let t1 = -b - discriminant_sqrt;
+    let t1 = -half_b - discriminant_sqrt;
     let is_t1_valid = t1.num_gt(f32x4::ZERO) & is_discriminant_positive;
 
-    let t2 = -b + discriminant_sqrt;
+    let t2 = -half_b + discriminant_sqrt;
     let is_t2_valid = t2.num_gt(f32x4::ZERO) & is_discriminant_positive;
 
     let t = is_t2_valid.select(t2, f32x4::MAX);
@@ -333,23 +331,23 @@ Our previous vectorized ray-sphere intersection algorithm looks like this with g
 
 ```rust
 fn ray_sphere<T: Real>(
-    ray_origin: Vec3<T>,
-    ray_dir: Vec3<T>,
-    sphere_origin: Vec3<T>,
+    ray_origin: GVec3<T>,
+    ray_dir: GVec3<T>,
+    sphere_origin: GVec3<T>,
     sphere_radius_squared: T,
 ) -> T {
-    let oc = ray_origin - sphere_origin;
-    let b = oc.dot(ray_dir);
-    let c = oc.length_squared() - sphere_radius_squared;
-    let discriminant = b * b - c;
+    let offset = ray_origin - sphere_origin;
+    let half_b = offset.dot(ray_dir);
+    let c = offset.length_squared() - sphere_radius_squared;
+    let discriminant = half_b * half_b - c;
 
     let is_discriminant_positive = discriminant.num_gt(T::ZERO);
     let discriminant_sqrt = discriminant.sqrt();
 
-    let t1 = -b - discriminant_sqrt;
+    let t1 = -half_b - discriminant_sqrt;
     let is_t1_valid = t1.num_gt(T::ZERO) & is_discriminant_positive;
 
-    let t2 = -b + discriminant_sqrt;
+    let t2 = -half_b + discriminant_sqrt;
     let is_t2_valid = t2.num_gt(T::ZERO) & is_discriminant_positive;
 
     let t = is_t2_valid.select(t2, T::MAX);
@@ -368,24 +366,24 @@ conditions return `bool` values like normal.
 ```rust
 // This cannot be used with SIMD types, but it can use branches and booleans like normal.
 fn ray_sphere<T: ScalarReal>(
-    ray_origin: Vec3<T>,
-    ray_dir: Vec3<T>,
-    sphere_origin: Vec3<T>,
+    ray_origin: GVec3<T>,
+    ray_dir: GVec3<T>,
+    sphere_origin: GVec3<T>,
     sphere_radius_squared: T,
 ) -> T {
-    let oc = ray_origin - sphere_origin;
-    let b = oc.dot(ray_dir);
-    let c = oc.length_squared() - sphere_radius_squared;
-    let discriminant = b * b - c;
+    let offset = ray_origin - sphere_origin;
+    let half_b = offset.dot(ray_dir);
+    let c = offset.length_squared() - sphere_radius_squared;
+    let discriminant = half_b * half_b - c;
 
     if discriminant > T::ZERO {
         let discriminant_sqrt = discriminant.sqrt();
 
-        let t1 = -b - discriminant_sqrt;
+        let t1 = -half_b - discriminant_sqrt;
         if t1 > T::ZERO {
             t1
         } else {
-            let t2 = -b + discriminant_sqrt;
+            let t2 = -half_b + discriminant_sqrt;
             if t2 > T::ZERO { t2 } else { T::MAX }
         }
     } else {
