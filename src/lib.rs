@@ -31,7 +31,7 @@
 //! of motion for some game objects:
 //!
 //! ```rust
-//! use gela::vectors::Vec3;
+//! use gela::vector::Vec3;
 //!
 //! // This method is known as semi-implicit Euler integration
 //! // https://gafferongames.com/post/integration_basics/
