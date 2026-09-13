@@ -7,15 +7,7 @@ description = "Generic linear algebra for games and graphics"
 repository = "https://github.com/Jondolf/gela"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-keywords = [
-    "gamedev",
-    "math",
-    "matrix",
-    "vector",
-    "quaternion",
-    "simd",
-    "determinism",
-]
+keywords = ["gamedev", "math", "matrix", "vector", "simd"]
 categories = ["mathematics", "game-engines", "no-std"]
 
 [features]
