@@ -16,7 +16,7 @@ Generic linear algebra for games and graphics.
 - Cross-platform determinism
 - `no_std` support
 
-[`gnum`]: https://crates.io/crates/gnum
+[`gnum`]: https://github.com/Jondolf/gnum
 [SIMD]: https://en.wikipedia.org/wiki/Single_instruction,_multiple_data
 [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
 
