@@ -2,6 +2,11 @@
 
 Generic linear algebra for games and graphics.
 
+> [!WARNING]
+>
+> `gela` is currently in alpha, and not intended for use in production just yet.
+> A full release will be made once we have a comprehensive test suite and benchmarks in place.
+
 ## Features
 
 - Generic element types using [`gnum`]
