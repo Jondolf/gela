@@ -61,34 +61,22 @@ pub type BVec3 = GVec3<bool>;
 /// A 4-dimensional vector with `bool` components.
 pub type BVec4 = GVec4<bool>;
 
-/// Four 2-dimensional vectors with `f32` components, in [AoSoA] layout.
-///
-/// [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+/// 2-dimensional vector with [`gimd::f32x4`] components.
 #[cfg(feature = "simd")]
 pub type Vec2x4 = GVec2<gimd::f32x4>;
-/// Four 3-dimensional vectors with `f32` components, in [AoSoA] layout.
-///
-/// [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+/// 3-dimensional vector with [`gimd::f32x4`] components.
 #[cfg(feature = "simd")]
 pub type Vec3x4 = GVec3<gimd::f32x4>;
-/// Four 4-dimensional vectors with `f32` components, in [AoSoA] layout.
-///
-/// [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+/// 4-dimensional vector with [`gimd::f32x4`] components.
 #[cfg(feature = "simd")]
 pub type Vec4x4 = GVec4<gimd::f32x4>;
 
-/// Eight 2-dimensional vectors with `f32` components, in [AoSoA] layout.
-///
-/// [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+/// 2-dimensional vector with [`gimd::f32x8`] components.
 #[cfg(feature = "simd")]
 pub type Vec2x8 = GVec2<gimd::f32x8>;
-/// Eight 3-dimensional vectors with `f32` components, in [AoSoA] layout.
-///
-/// [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+/// 3-dimensional vector with [`gimd::f32x8`] components.
 #[cfg(feature = "simd")]
 pub type Vec3x8 = GVec3<gimd::f32x8>;
-/// Eight 4-dimensional vectors with `f32` components, in [AoSoA] layout.
-///
-/// [AoSoA]: https://en.wikipedia.org/wiki/AoS_and_SoA
+/// 4-dimensional vector with [`gimd::f32x8`] components.
 #[cfg(feature = "simd")]
 pub type Vec4x8 = GVec4<gimd::f32x8>;

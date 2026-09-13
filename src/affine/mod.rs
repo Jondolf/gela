@@ -23,3 +23,17 @@ pub type Affine3 = GAffine3<f32>;
 pub type DAffine2 = GAffine2<f64>;
 /// A 3D affine transformation with `f64` components.
 pub type DAffine3 = GAffine3<f64>;
+
+/// A 2D affine transformation with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Affine2x4 = GAffine2<gimd::f32x4>;
+/// A 3D affine transformation with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Affine3x4 = GAffine3<gimd::f32x4>;
+
+/// A 2D affine transformation with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Affine2x8 = GAffine2<gimd::f32x8>;
+/// A 3D affine transformation with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Affine3x8 = GAffine3<gimd::f32x8>;

@@ -33,3 +33,23 @@ pub type DMat2 = GMat2<f64>;
 pub type DMat3 = GMat3<f64>;
 /// A 4x4 matrix with `f64` components.
 pub type DMat4 = GMat4<f64>;
+
+/// A 2x2 matrix with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Mat2x4 = GMat2<gimd::f32x4>;
+/// A 3x3 matrix with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Mat3x4 = GMat3<gimd::f32x4>;
+/// A 4x4 matrix with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Mat4x4 = GMat4<gimd::f32x4>;
+
+/// A 2x2 matrix with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Mat2x8 = GMat2<gimd::f32x8>;
+/// A 3x3 matrix with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Mat3x8 = GMat3<gimd::f32x8>;
+/// A 4x4 matrix with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Mat4x8 = GMat4<gimd::f32x8>;

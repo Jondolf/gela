@@ -22,3 +22,17 @@ pub type DRot2 = GRot2<f64>;
 pub type Rot3 = GRot3<f32>;
 /// A 3D rotation with `f64` components.
 pub type DRot3 = GRot3<f64>;
+
+/// A 2D rotation with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Rot2x4 = GRot2<gimd::f32x4>;
+/// A 3D rotation with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type Rot3x4 = GRot3<gimd::f32x4>;
+
+/// A 2D rotation with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Rot2x8 = GRot2<gimd::f32x8>;
+/// A 3D rotation with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type Rot3x8 = GRot3<gimd::f32x8>;
