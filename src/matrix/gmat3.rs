@@ -502,6 +502,18 @@ impl<T: Real> GMat3<T> {
         self.x_axis.x + self.y_axis.y + self.z_axis.z
     }
 
+    /// Returns true if `self` is equal to its own transpose, within `max_abs_diff`.
+    ///
+    /// See [`SymmetricGMat3`](crate::matrix::SymmetricGMat3) for a matrix type that stores
+    /// only the six distinct elements of a symmetric matrix.
+    #[inline]
+    #[must_use]
+    pub fn is_symmetric(&self, max_abs_diff: T) -> T::Bool {
+        self.x_axis.y.sub(self.y_axis.x).abs().num_le(max_abs_diff)
+            & self.x_axis.z.sub(self.z_axis.x).abs().num_le(max_abs_diff)
+            & self.y_axis.z.sub(self.z_axis.y).abs().num_le(max_abs_diff)
+    }
+
     /// Returns the determinant of `self`.
     #[inline]
     #[must_use]
