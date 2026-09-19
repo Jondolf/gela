@@ -61,3 +61,11 @@ pub type SymmetricMat3 = SymmetricGMat3<f32>;
 
 /// A symmetric 3x3 matrix with `f64` components.
 pub type SymmetricDMat3 = SymmetricGMat3<f64>;
+
+/// A symmetric 3x3 matrix with [`gimd::f32x4`] components.
+#[cfg(feature = "simd")]
+pub type SymmetricMat3x4 = SymmetricGMat3<gimd::f32x4>;
+
+/// A symmetric 3x3 matrix with [`gimd::f32x8`] components.
+#[cfg(feature = "simd")]
+pub type SymmetricMat3x8 = SymmetricGMat3<gimd::f32x8>;
