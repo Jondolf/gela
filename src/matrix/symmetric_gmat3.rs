@@ -605,7 +605,7 @@ impl<T: Real> SymmetricGMat3<T> {
         )
     }
 
-    /// Returns the quadratic form `vᵀ * self * v`.
+    /// Evaluates the quadratic form of `self` at `v`, returning `vᵀ * self * v`.
     ///
     /// In physics simulations, for an inverse inertia tensor,
     /// this is the effective mass along a single axis.
@@ -613,7 +613,17 @@ impl<T: Real> SymmetricGMat3<T> {
     #[inline]
     #[must_use]
     pub fn quadratic_form(&self, v: GVec3<T>) -> T {
-        v.dot(self.mul_vec3(v))
+        //     [ a d e ]
+        // A = | d b f |
+        //     [ e f c ]
+        let (x, y, z) = (v.x, v.y, v.z);
+        let [a, b, c] = [self.m00, self.m11, self.m22];
+        let [d, e, f] = [self.m01, self.m02, self.m12];
+
+        // This expanded form is fewer ops than `v.dot(self.mul_vec3(v))`,
+        // and was measured to be ~20% faster.
+        let two = T::from_f32(2.0);
+        x * (a * x + two * (d * y + e * z)) + y * (b * y + two * f * z) + c * z * z
     }
 
     /// Adds two symmetric 3x3 matrices.

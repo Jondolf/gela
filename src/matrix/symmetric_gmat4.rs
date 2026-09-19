@@ -731,7 +731,7 @@ impl<T: Real> SymmetricGMat4<T> {
         )
     }
 
-    /// Returns the quadratic form `vᵀ * self * v`.
+    /// Evaluates the quadratic form of `self` at `v`, returning `vᵀ * self * v`.
     ///
     /// In physics simulations, for an inverse mass matrix,
     /// this is the effective mass along a single axis.
