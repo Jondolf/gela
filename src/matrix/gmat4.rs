@@ -11,7 +11,7 @@ use core::{
 
 use gnum::{
     num::{Float, NumCast, Real, ScalarReal},
-    simd::Select,
+    simd::{MaskLike, Select},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -724,9 +724,13 @@ impl<T: Real> GMat4<T> {
 
         let inv_det = dot1.recip();
         let inverted = inverse.mul(inv_det);
-        let invertible = dot1.num_ne(T::ZERO);
 
+        if CHECKED {
+            let invertible = dot1.num_ne(T::ZERO);
         (Self::select(invertible, inverted, Self::ZERO), invertible)
+        } else {
+            (inverted, T::Bool::TRUE)
+        }
     }
 
     /// Returns the inverse of `self`.
