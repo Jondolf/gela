@@ -3,10 +3,7 @@ use crate::matrix::GMat3;
 use crate::matrix::Mat3A;
 use crate::vector::GVec3;
 
-use core::{
-    iter::{Product, Sum},
-    ops::*,
-};
+use core::{iter::Sum, ops::*};
 
 use gnum::{
     num::{Float, NumCast, Real},
@@ -44,7 +41,7 @@ pub const fn symmetric_gmat3<T: Real>(
 ///
 /// The sum and difference of two symmetric matrices is always symmetric.
 /// However, the product of two symmetric matrices is *only* symmetric
-/// if the matrices are commutable, meaning that `AB = BA`.
+/// if the matrices are commutable, meaning that `AB == BA`.
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct SymmetricGMat3<T: Real> {
@@ -95,24 +92,62 @@ impl<T: Real> SymmetricGMat3<T> {
         }
     }
 
-    /// Creates a symmetric 3x3 matrix from three column vectors.
-    ///
-    /// Only the lower left triangle of the matrix is used. No check is performed to ensure
-    /// that the given columns truly produce a symmetric matrix.
+    /// Creates a symmetric 3x3 matrix from a `[T; 6]` containing the lower left triangle
+    /// of the matrix in column-major order `[m00, m01, m02, m11, m12, m22]`.
     #[inline(always)]
     #[must_use]
-    pub const fn from_cols_unchecked(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>) -> Self {
+    pub const fn from_array(m: [T; 6]) -> Self {
+        Self::new(m[0], m[1], m[2], m[3], m[4], m[5])
+    }
+
+    /// Creates a `[T; 6]` array containing the lower left triangle of the matrix
+    /// in column-major order `[m00, m01, m02, m11, m12, m22]`.
+    #[inline(always)]
+    #[must_use]
+    pub const fn to_array(&self) -> [T; 6] {
+        [self.m00, self.m01, self.m02, self.m11, self.m12, self.m22]
+    }
+
+    /// Creates a symmetric 3x3 matrix from the lower left triangle of three column vectors.
+    ///
+    /// The elements above the diagonal are ignored, and mirrored from the ones below it.
+    /// See [`Self::from_cols_upper()`] for the upper triangular version.
+    #[inline(always)]
+    #[must_use]
+    pub const fn from_cols_lower(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>) -> Self {
         Self::new(x_axis.x, x_axis.y, x_axis.z, y_axis.y, y_axis.z, z_axis.z)
     }
 
-    /// Creates a symmetric 3x3 matrix from a `[T; 9]` array stored in column major order.
+    /// Creates a symmetric 3x3 matrix from the upper right triangle of three column vectors.
     ///
-    /// Only the lower left triangle of the matrix is used. No check is performed to ensure
-    /// that the given array truly produces a symmetric matrix.
+    /// The elements below the diagonal are ignored, and mirrored from the ones above it.
+    /// See [`Self::from_cols_lower()`] for the lower triangular version.
+    #[inline(always)]
+    #[must_use]
+    pub const fn from_cols_upper(x_axis: GVec3<T>, y_axis: GVec3<T>, z_axis: GVec3<T>) -> Self {
+        Self::new(x_axis.x, y_axis.x, z_axis.x, y_axis.y, z_axis.y, z_axis.z)
+    }
+
+    /// Creates a symmetric 3x3 matrix from the lower left triangle of a `[T; 9]` array
+    /// stored in column major order.
+    ///
+    /// The elements above the diagonal are ignored, and mirrored from the ones below it.
+    /// See [`Self::from_cols_array_upper()`] for the upper triangular version.
     #[inline]
     #[must_use]
-    pub const fn from_cols_array_unchecked(m: &[T; 9]) -> Self {
+    pub const fn from_cols_array_lower(m: &[T; 9]) -> Self {
         Self::new(m[0], m[1], m[2], m[4], m[5], m[8])
+    }
+
+    /// Creates a symmetric 3x3 matrix from the upper right triangle of a `[T; 9]` array
+    /// stored in column major order.
+    ///
+    /// The elements below the diagonal are ignored, and mirrored from the ones above it.
+    /// See [`Self::from_cols_array_lower()`] for the lower triangular version.
+    #[inline]
+    #[must_use]
+    pub const fn from_cols_array_upper(m: &[T; 9]) -> Self {
+        Self::new(m[0], m[3], m[6], m[4], m[7], m[8])
     }
 
     /// Creates a `[T; 9]` array storing data in column major order.
@@ -125,14 +160,30 @@ impl<T: Real> SymmetricGMat3<T> {
         ]
     }
 
-    /// Creates a symmetric 3x3 matrix from a `[[T; 3]; 3]` 2D array stored in column major order.
+    /// Creates a symmetric 3x3 matrix from the lower left triangle of a `[[T; 3]; 3]` 2D array
+    /// stored in column major order.
     ///
-    /// Only the lower left triangle of the matrix is used. No check is performed to ensure
-    /// that the given array truly produces a symmetric matrix.
+    /// The elements above the diagonal are ignored, and mirrored from the ones below it.
+    /// See [`Self::from_cols_array_2d_upper()`] for the upper triangular version.
     #[inline]
     #[must_use]
-    pub const fn from_cols_array_2d(m: &[[T; 3]; 3]) -> Self {
-        Self::from_cols_unchecked(
+    pub const fn from_cols_array_2d_lower(m: &[[T; 3]; 3]) -> Self {
+        Self::from_cols_lower(
+            GVec3::from_array(m[0]),
+            GVec3::from_array(m[1]),
+            GVec3::from_array(m[2]),
+        )
+    }
+
+    /// Creates a symmetric 3x3 matrix from the upper right triangle of a `[[T; 3]; 3]` 2D array
+    /// stored in column major order.
+    ///
+    /// The elements below the diagonal are ignored, and mirrored from the ones above it.
+    /// See [`Self::from_cols_array_2d_lower()`] for the lower triangular version.
+    #[inline]
+    #[must_use]
+    pub const fn from_cols_array_2d_upper(m: &[[T; 3]; 3]) -> Self {
+        Self::from_cols_upper(
             GVec3::from_array(m[0]),
             GVec3::from_array(m[1]),
             GVec3::from_array(m[2]),
@@ -183,20 +234,63 @@ impl<T: Real> SymmetricGMat3<T> {
         )
     }
 
-    /// Creates a symmetric 3x3 matrix from a 3x3 matrix.
+    /// Creates a symmetric 3x3 matrix from the lower left triangle of a 3x3 matrix.
     ///
-    /// Only the lower left triangle of the matrix is used. No check is performed to ensure
-    /// that the given matrix is truly symmetric.
+    /// The elements above the diagonal are ignored, and mirrored from the ones below it.
+    /// See [`Self::from_mat3_upper()`] for the upper triangular version.
     #[inline]
     #[must_use]
-    pub const fn from_mat3_unchecked(mat: GMat3<T>) -> Self {
+    pub const fn from_mat3_lower(mat: GMat3<T>) -> Self {
+        Self::from_cols_lower(mat.x_axis, mat.y_axis, mat.z_axis)
+    }
+
+    /// Creates a symmetric 3x3 matrix from the upper right triangle of a 3x3 matrix.
+    ///
+    /// The elements below the diagonal are ignored, and mirrored from the ones above it.
+    /// See [`Self::from_mat3_lower()`] for the lower triangular version.
+    #[inline]
+    #[must_use]
+    pub const fn from_mat3_upper(mat: GMat3<T>) -> Self {
+        Self::from_cols_upper(mat.x_axis, mat.y_axis, mat.z_axis)
+    }
+
+    /// Creates a symmetric 3x3 matrix from the product `M * Mᵀ` of a 3x3 matrix.
+    ///
+    /// This is the Gram matrix of the rows of `mat`. For the Gram matrix of the columns,
+    /// see [`Self::from_mat3_transpose_mul()`].
+    ///
+    /// The result is always symmetric and positive semi-definite.
+    #[inline]
+    #[must_use]
+    pub fn from_mat3_mul_transpose(mat: GMat3<T>) -> Self {
+        let (r0, r1, r2) = (mat.row(0), mat.row(1), mat.row(2));
         Self::new(
-            mat.x_axis.x,
-            mat.x_axis.y,
-            mat.x_axis.z,
-            mat.y_axis.y,
-            mat.y_axis.z,
-            mat.z_axis.z,
+            r0.dot(r0),
+            r1.dot(r0),
+            r2.dot(r0),
+            r1.dot(r1),
+            r2.dot(r1),
+            r2.dot(r2),
+        )
+    }
+
+    /// Creates a symmetric 3x3 matrix from the product `Mᵀ * M` of a 3x3 matrix.
+    ///
+    /// This is the Gram matrix of the columns of `mat`. For the Gram matrix of the rows,
+    /// see [`Self::from_mat3_mul_transpose()`].
+    ///
+    /// The result is always symmetric and positive semi-definite.
+    #[inline]
+    #[must_use]
+    pub fn from_mat3_transpose_mul(mat: GMat3<T>) -> Self {
+        let (c0, c1, c2) = (mat.x_axis, mat.y_axis, mat.z_axis);
+        Self::new(
+            c0.dot(c0),
+            c1.dot(c0),
+            c2.dot(c0),
+            c1.dot(c1),
+            c2.dot(c1),
+            c2.dot(c2),
         )
     }
 
@@ -207,7 +301,7 @@ impl<T: Real> SymmetricGMat3<T> {
         GMat3::from_cols_array(&self.to_cols_array())
     }
 
-    /// Creates a new symmetric 3x3 matrix from the outer product `v * v^T`.
+    /// Creates a new symmetric 3x3 matrix from the outer product `v * vᵀ`.
     #[inline(always)]
     #[must_use]
     pub fn from_outer_product(v: GVec3<T>) -> Self {
@@ -221,18 +315,62 @@ impl<T: Real> SymmetricGMat3<T> {
         )
     }
 
-    /// Creates a symmetric 3x3 matrix from the first 9 values in `slice`.
+    /// Creates a symmetric 3x3 matrix from a slice containing the lower left triangle
+    /// of the matrix in column-major order `[m00, m01, m02, m11, m12, m22]`.
     ///
-    /// Only the lower left triangle of the matrix is used. No check is performed to ensure
-    /// that the given slice truly produces a symmetric matrix.
+    /// # Panics
+    ///
+    /// Panics if `slice` is less than 6 elements long.
+    #[inline]
+    #[must_use]
+    pub const fn from_slice(slice: &[T]) -> Self {
+        Self::new(slice[0], slice[1], slice[2], slice[3], slice[4], slice[5])
+    }
+
+    /// Writes the lower left triangle of `self` to a slice in column-major order
+    /// `[m00, m01, m02, m11, m12, m22]`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `slice` is less than 6 elements long.
+    #[inline]
+    pub fn write_to_slice(&self, slice: &mut [T]) {
+        slice[0] = self.m00;
+        slice[1] = self.m01;
+        slice[2] = self.m02;
+        slice[3] = self.m11;
+        slice[4] = self.m12;
+        slice[5] = self.m22;
+    }
+
+    /// Creates a symmetric 3x3 matrix from the lower left triangle of the first 9 values
+    /// in `slice`, stored in column major order.
+    ///
+    /// The elements above the diagonal are ignored, and mirrored from the ones below it.
+    /// See [`Self::from_cols_slice_upper()`] for the upper triangular version.
     ///
     /// # Panics
     ///
     /// Panics if `slice` is less than 9 elements long.
     #[inline]
     #[must_use]
-    pub const fn from_cols_slice_unchecked(slice: &[T]) -> Self {
+    pub const fn from_cols_slice_lower(slice: &[T]) -> Self {
         Self::new(slice[0], slice[1], slice[2], slice[4], slice[5], slice[8])
+    }
+
+    /// Creates a symmetric 3x3 matrix from the upper right triangle of the first 9 values
+    /// in `slice`, stored in column major order.
+    ///
+    /// The elements below the diagonal are ignored, and mirrored from the ones above it.
+    /// See [`Self::from_cols_slice_lower()`] for the lower triangular version.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `slice` is less than 9 elements long.
+    #[inline]
+    #[must_use]
+    pub const fn from_cols_slice_upper(slice: &[T]) -> Self {
+        Self::new(slice[0], slice[3], slice[6], slice[4], slice[7], slice[8])
     }
 
     /// Writes the columns of `self` to the first 9 elements in `slice`.
@@ -295,19 +433,53 @@ impl<T: Real> SymmetricGMat3<T> {
         GVec3::new(self.m00, self.m11, self.m22)
     }
 
+    /// Returns the trace of `self`, the sum of the diagonal elements.
+    ///
+    /// This is also the sum of the eigenvalues of `self`.
+    #[inline]
+    #[must_use]
+    pub fn trace(&self) -> T {
+        self.m00 + self.m11 + self.m22
+    }
+
+    /// Returns the adjugate of `self`, the transpose of its cofactor matrix.
+    ///
+    /// The adjugate of a symmetric matrix is symmetric. It satisfies
+    /// `self * self.adjugate() == SymmetricGMat3::IDENTITY * self.determinant()`,
+    /// and is the numerator of the inverse.
+    #[inline]
+    #[must_use]
+    pub fn adjugate(&self) -> Self {
+        //     [ a d e ]
+        // A = | d b f |
+        //     [ e f c ]
+        let [a, b, c] = [self.m00, self.m11, self.m22];
+        let [d, e, f] = [self.m01, self.m02, self.m12];
+        Self::new(
+            b * c - f * f,
+            f * e - d * c,
+            d * f - b * e,
+            a * c - e * e,
+            d * e - a * f,
+            a * b - d * d,
+        )
+    }
+
+    #[inline(always)]
+    #[must_use]
+    fn adjugate_and_determinant(&self) -> (Self, T) {
+        let adjugate = self.adjugate();
+        // det(A) = abc + 2def - af^2 - cd^2 - be^2
+        let determinant =
+            adjugate.m00 * self.m00 + adjugate.m01 * self.m01 + adjugate.m02 * self.m02;
+        (adjugate, determinant)
+    }
+
     /// Returns the determinant of `self`.
     #[inline]
     #[must_use]
     pub fn determinant(&self) -> T {
-        //     [ a d e ]
-        // A = | d b f |
-        //     [ e f c ]
-        //
-        // det(A) = abc + 2def - af^2 - bd^2 - ce^2
-        let two = T::ONE + T::ONE;
-        let [a, b, c] = [self.m00, self.m11, self.m22];
-        let [d, e, f] = [self.m01, self.m02, self.m12];
-        a * b * c + two * d * e * f - a * f * f - b * d * d - c * e * e
+        self.adjugate_and_determinant().1
     }
 
     /// Returns the inverse of `self`.
@@ -316,55 +488,22 @@ impl<T: Real> SymmetricGMat3<T> {
     #[inline]
     #[must_use]
     pub fn inverse(&self) -> Self {
-        let m00 = self.m11 * self.m22 - self.m12 * self.m12;
-        let m01 = self.m12 * self.m02 - self.m22 * self.m01;
-        let m02 = self.m01 * self.m12 - self.m02 * self.m11;
-
-        let inverse_determinant = T::ONE / (m00 * self.m00 + m01 * self.m01 + m02 * self.m02);
-
-        let m11 = self.m22 * self.m00 - self.m02 * self.m02;
-        let m12 = self.m02 * self.m01 - self.m00 * self.m12;
-        let m22 = self.m00 * self.m11 - self.m01 * self.m01;
-
-        Self {
-            m00: m00 * inverse_determinant,
-            m01: m01 * inverse_determinant,
-            m02: m02 * inverse_determinant,
-            m11: m11 * inverse_determinant,
-            m12: m12 * inverse_determinant,
-            m22: m22 * inverse_determinant,
-        }
+        let (adjugate, determinant) = self.adjugate_and_determinant();
+        adjugate.mul_scalar(determinant.recip())
     }
 
     /// Returns the inverse of `self` or `SymmetricGMat3::ZERO` if the matrix is not invertible.
     #[inline]
     #[must_use]
     pub fn inverse_or_zero(&self) -> Self {
-        let m00 = self.m11 * self.m22 - self.m12 * self.m12;
-        let m01 = self.m12 * self.m02 - self.m22 * self.m01;
-        let m02 = self.m01 * self.m12 - self.m02 * self.m11;
-
-        let determinant = m00 * self.m00 + m01 * self.m01 + m02 * self.m02;
+        let (adjugate, determinant) = self.adjugate_and_determinant();
         let non_invertible = determinant.num_eq(T::ZERO);
 
         if non_invertible.all() {
             return Self::ZERO;
         }
 
-        let inverse_determinant = T::ONE / determinant;
-
-        let m11 = self.m22 * self.m00 - self.m02 * self.m02;
-        let m12 = self.m02 * self.m01 - self.m00 * self.m12;
-        let m22 = self.m00 * self.m11 - self.m01 * self.m01;
-
-        let inverted = Self {
-            m00: m00 * inverse_determinant,
-            m01: m01 * inverse_determinant,
-            m02: m02 * inverse_determinant,
-            m11: m11 * inverse_determinant,
-            m12: m12 * inverse_determinant,
-            m22: m22 * inverse_determinant,
-        };
+        let inverted = adjugate.mul_scalar(determinant.recip());
 
         Self::select(non_invertible, Self::ZERO, inverted)
     }
@@ -373,18 +512,109 @@ impl<T: Real> SymmetricGMat3<T> {
     #[inline]
     #[must_use]
     pub fn mul_vec3(&self, rhs: GVec3<T>) -> GVec3<T> {
-        GVec3::new(
-            self.m00 * rhs.x + self.m01 * rhs.y + self.m02 * rhs.z,
-            self.m01 * rhs.x + self.m11 * rhs.y + self.m12 * rhs.z,
-            self.m02 * rhs.x + self.m12 * rhs.y + self.m22 * rhs.z,
-        )
+        let mut res = self.col(0).mul(rhs.x);
+        res = res.add(self.col(1).mul(rhs.y));
+        res = res.add(self.col(2).mul(rhs.z));
+        res
     }
 
     /// Multiplies two symmetric 3x3 matrices.
+    ///
+    /// The product of two symmetric matrices is *only* symmetric if the matrices commute,
+    /// meaning that `AB == BA`. This is not the case in general, so the result is returned
+    /// as a [`GMat3`].
+    ///
+    /// For a product that is guaranteed to be symmetric, see [`Self::congruence()`].
     #[inline]
     #[must_use]
-    pub fn mul_symmetric_mat3(&self, rhs: &Self) -> Self {
-        self.mul(rhs)
+    pub fn mul_symmetric_mat3(&self, rhs: &Self) -> GMat3<T> {
+        GMat3::from_cols(
+            self.mul_vec3(rhs.col(0)),
+            self.mul_vec3(rhs.col(1)),
+            self.mul_vec3(rhs.col(2)),
+        )
+    }
+
+    /// Multiplies a symmetric 3x3 matrix by a 3x3 matrix.
+    ///
+    /// The result is not symmetric in general, so it is returned as a [`GMat3`].
+    #[inline]
+    #[must_use]
+    pub fn mul_mat3(&self, rhs: &GMat3<T>) -> GMat3<T> {
+        GMat3::from_cols(
+            self.mul_vec3(rhs.x_axis),
+            self.mul_vec3(rhs.y_axis),
+            self.mul_vec3(rhs.z_axis),
+        )
+    }
+
+    /// Returns the congruence transform `m * self * mᵀ`.
+    ///
+    /// The result is guaranteed to be symmetric, even if `m` is not.
+    ///
+    /// If `m` is a rotation matrix, `mᵀ == m⁻¹`, and this re-expresses `self` in a rotated basis.
+    /// This can be used to transform an inertia tensor to a different coordinate system, for example.
+    #[inline]
+    #[must_use]
+    pub fn congruence(&self, m: &GMat3<T>) -> Self {
+        let (r0, r1, r2) = (m.row(0), m.row(1), m.row(2));
+        let (t0, t1, t2) = (self.mul_vec3(r0), self.mul_vec3(r1), self.mul_vec3(r2));
+        Self::new(
+            r0.dot(t0),
+            r1.dot(t0),
+            r2.dot(t0),
+            r1.dot(t1),
+            r2.dot(t1),
+            r2.dot(t2),
+        )
+    }
+
+    /// Returns the congruence transform `skew(v) * self * skew(v)ᵀ`,
+    /// where `skew(v)` is the skew-symmetric matrix such that `skew(v) * u == v.cross(u)`.
+    ///
+    /// The result is guaranteed to be symmetric.
+    ///
+    /// In physics simulations, this is the lever arm contribution of an inverse inertia tensor
+    /// to an effective mass.
+    #[doc(alias = "skew_sandwich")]
+    #[inline]
+    #[must_use]
+    pub fn skew_congruence(&self, v: GVec3<T>) -> Self {
+        //             [  0 -z  y ]           [ a d e ]
+        // skew(v) =   |  z  0 -x |   self =  | d b f |
+        //             [ -y  x  0 ]           [ e f c ]
+        let (x, y, z) = (v.x, v.y, v.z);
+        let [a, b, c] = [self.m00, self.m11, self.m22];
+        let [d, e, f] = [self.m01, self.m02, self.m12];
+
+        // Shared between the diagonal elements of `self * skew(v)ᵀ` below.
+        let xf = x * f;
+        let ye = y * e;
+        let zd = z * d;
+
+        let t0 = GVec3::new(ye - zd, y * f - z * b, y * c - z * f);
+        let t1 = GVec3::new(z * a - x * e, zd - xf, z * e - x * c);
+        let t2 = GVec3::new(x * d - y * a, x * b - y * d, xf - ye);
+
+        Self::new(
+            y * t0.z - z * t0.y,
+            z * t0.x - x * t0.z,
+            x * t0.y - y * t0.x,
+            z * t1.x - x * t1.z,
+            x * t1.y - y * t1.x,
+            x * t2.y - y * t2.x,
+        )
+    }
+
+    /// Returns the quadratic form `vᵀ * self * v`.
+    ///
+    /// In physics simulations, for an inverse inertia tensor,
+    /// this is the effective mass along a single axis.
+    #[doc(alias = "vector_sandwich")]
+    #[inline]
+    #[must_use]
+    pub fn quadratic_form(&self, v: GVec3<T>) -> T {
+        v.dot(self.mul_vec3(v))
     }
 
     /// Adds two symmetric 3x3 matrices.
@@ -401,6 +631,24 @@ impl<T: Real> SymmetricGMat3<T> {
         self.sub(rhs)
     }
 
+    /// Adds a symmetric 3x3 matrix and a 3x3 matrix.
+    ///
+    /// The result is not symmetric in general, so it is returned as a [`GMat3`].
+    #[inline]
+    #[must_use]
+    pub fn add_mat3(&self, rhs: &GMat3<T>) -> GMat3<T> {
+        self.to_mat3().add(rhs)
+    }
+
+    /// Subtracts a 3x3 matrix from a symmetric 3x3 matrix.
+    ///
+    /// The result is not symmetric in general, so it is returned as a [`GMat3`].
+    #[inline]
+    #[must_use]
+    pub fn sub_mat3(&self, rhs: &GMat3<T>) -> GMat3<T> {
+        self.to_mat3().sub(rhs)
+    }
+
     /// Multiplies a symmetric 3x3 matrix by a scalar.
     #[inline]
     #[must_use]
@@ -415,19 +663,19 @@ impl<T: Real> SymmetricGMat3<T> {
         )
     }
 
-    /// Multiply `self` by a scaling vector `scale`.
-    /// This is faster than creating a whole diagonal scaling matrix and then multiplying that.
-    /// This operation is commutative.
+    /// Multiplies `self` by a scaling vector `scale`.
+    ///
+    /// This is a faster equivalent to `self * Self::from_diagonal(scale)`.
+    ///
+    /// This operation is not commutative and does not generally preserve symmetry,
+    /// so the result is returned as a [`GMat3`].
     #[inline]
     #[must_use]
-    pub fn mul_diagonal_scale(&self, scale: GVec3<T>) -> Self {
-        Self::new(
-            self.m00 * scale.x,
-            self.m01 * scale.y,
-            self.m02 * scale.z,
-            self.m11 * scale.y,
-            self.m12 * scale.z,
-            self.m22 * scale.z,
+    pub fn mul_diagonal_scale(&self, scale: GVec3<T>) -> GMat3<T> {
+        GMat3::from_cols(
+            self.col(0) * scale.x,
+            self.col(1) * scale.y,
+            self.col(2) * scale.z,
         )
     }
 
@@ -435,8 +683,14 @@ impl<T: Real> SymmetricGMat3<T> {
     #[inline]
     #[must_use]
     pub fn div_scalar(&self, rhs: T) -> Self {
-        let inv_rhs = T::ONE / rhs;
-        self.mul_scalar(inv_rhs)
+        Self::new(
+            self.m00.div(rhs),
+            self.m01.div(rhs),
+            self.m02.div(rhs),
+            self.m11.div(rhs),
+            self.m12.div(rhs),
+            self.m22.div(rhs),
+        )
     }
 
     /// Returns true if the absolute difference of all elements between `self` and `rhs`
@@ -690,6 +944,134 @@ impl<T: Real + AddAssign> AddAssign<&SymmetricGMat3<T>> for SymmetricGMat3<T> {
     }
 }
 
+impl<T: Real + Add<Output = T>> Add<GMat3<T>> for SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: GMat3<T>) -> GMat3<T> {
+        self.to_mat3().add(rhs)
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<&GMat3<T>> for SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: &GMat3<T>) -> GMat3<T> {
+        self.add(*rhs)
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<GMat3<T>> for &SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: GMat3<T>) -> GMat3<T> {
+        (*self).add(rhs)
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<&GMat3<T>> for &SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: &GMat3<T>) -> GMat3<T> {
+        (*self).add(*rhs)
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<SymmetricGMat3<T>> for GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        self.add(rhs.to_mat3())
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<&SymmetricGMat3<T>> for GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
+        self.add(*rhs)
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<SymmetricGMat3<T>> for &GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        (*self).add(rhs)
+    }
+}
+
+impl<T: Real + Add<Output = T>> Add<&SymmetricGMat3<T>> for &GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn add(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
+        (*self).add(*rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<GMat3<T>> for SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: GMat3<T>) -> GMat3<T> {
+        self.to_mat3().sub(rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<&GMat3<T>> for SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: &GMat3<T>) -> GMat3<T> {
+        self.sub(*rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<GMat3<T>> for &SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: GMat3<T>) -> GMat3<T> {
+        (*self).sub(rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<&GMat3<T>> for &SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: &GMat3<T>) -> GMat3<T> {
+        (*self).sub(*rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<SymmetricGMat3<T>> for GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        self.sub(rhs.to_mat3())
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<&SymmetricGMat3<T>> for GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
+        self.sub(*rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<SymmetricGMat3<T>> for &GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        (*self).sub(rhs)
+    }
+}
+
+impl<T: Real + Sub<Output = T>> Sub<&SymmetricGMat3<T>> for &GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn sub(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
+        (*self).sub(*rhs)
+    }
+}
+
 impl<T: Real + Sub<Output = T>> Sub for SymmetricGMat3<T> {
     type Output = Self;
     #[inline]
@@ -744,55 +1126,102 @@ impl<T: Real + SubAssign> SubAssign<&SymmetricGMat3<T>> for SymmetricGMat3<T> {
 }
 
 impl<T: Real + Mul<Output = T>> Mul for SymmetricGMat3<T> {
-    type Output = Self;
+    type Output = GMat3<T>;
     #[inline]
-    fn mul(self, rhs: SymmetricGMat3<T>) -> Self {
-        SymmetricGMat3::new(
-            self.m00 * rhs.m00 + self.m01 * rhs.m01 + self.m02 * rhs.m02,
-            self.m00 * rhs.m01 + self.m01 * rhs.m11 + self.m02 * rhs.m12,
-            self.m00 * rhs.m02 + self.m01 * rhs.m12 + self.m02 * rhs.m22,
-            self.m01 * rhs.m01 + self.m11 * rhs.m11 + self.m12 * rhs.m12,
-            self.m01 * rhs.m02 + self.m11 * rhs.m12 + self.m12 * rhs.m22,
-            self.m02 * rhs.m02 + self.m12 * rhs.m12 + self.m22 * rhs.m22,
-        )
+    fn mul(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        self.mul_symmetric_mat3(&rhs)
     }
 }
 
 impl<T: Real + Mul<Output = T>> Mul<&SymmetricGMat3<T>> for SymmetricGMat3<T> {
-    type Output = Self;
+    type Output = GMat3<T>;
     #[inline]
-    fn mul(self, rhs: &SymmetricGMat3<T>) -> Self {
+    fn mul(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
         self.mul(*rhs)
     }
 }
 
 impl<T: Real + Mul<Output = T>> Mul<SymmetricGMat3<T>> for &SymmetricGMat3<T> {
-    type Output = SymmetricGMat3<T>;
+    type Output = GMat3<T>;
     #[inline]
-    fn mul(self, rhs: SymmetricGMat3<T>) -> SymmetricGMat3<T> {
+    fn mul(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
         (*self).mul(rhs)
     }
 }
 
 impl<T: Real + Mul<Output = T>> Mul<&SymmetricGMat3<T>> for &SymmetricGMat3<T> {
-    type Output = SymmetricGMat3<T>;
+    type Output = GMat3<T>;
     #[inline]
-    fn mul(self, rhs: &SymmetricGMat3<T>) -> SymmetricGMat3<T> {
+    fn mul(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
         (*self).mul(*rhs)
     }
 }
 
-impl<T: Real + Mul<Output = T>> MulAssign for SymmetricGMat3<T> {
+impl<T: Real + Mul<Output = T>> Mul<GMat3<T>> for SymmetricGMat3<T> {
+    type Output = GMat3<T>;
     #[inline]
-    fn mul_assign(&mut self, rhs: SymmetricGMat3<T>) {
-        *self = self.mul(rhs);
+    fn mul(self, rhs: GMat3<T>) -> GMat3<T> {
+        self.mul_mat3(&rhs)
     }
 }
 
-impl<T: Real + MulAssign> MulAssign<&SymmetricGMat3<T>> for SymmetricGMat3<T> {
+impl<T: Real + Mul<Output = T>> Mul<&GMat3<T>> for SymmetricGMat3<T> {
+    type Output = GMat3<T>;
     #[inline]
-    fn mul_assign(&mut self, rhs: &SymmetricGMat3<T>) {
-        self.mul_assign(*rhs);
+    fn mul(self, rhs: &GMat3<T>) -> GMat3<T> {
+        self.mul_mat3(rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<GMat3<T>> for &SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn mul(self, rhs: GMat3<T>) -> GMat3<T> {
+        self.mul_mat3(&rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<&GMat3<T>> for &SymmetricGMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn mul(self, rhs: &GMat3<T>) -> GMat3<T> {
+        self.mul_mat3(rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<SymmetricGMat3<T>> for GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn mul(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        GMat3::from_cols(
+            self.mul_vec3(rhs.col(0)),
+            self.mul_vec3(rhs.col(1)),
+            self.mul_vec3(rhs.col(2)),
+        )
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<&SymmetricGMat3<T>> for GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn mul(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
+        self.mul(*rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<SymmetricGMat3<T>> for &GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn mul(self, rhs: SymmetricGMat3<T>) -> GMat3<T> {
+        (*self).mul(rhs)
+    }
+}
+
+impl<T: Real + Mul<Output = T>> Mul<&SymmetricGMat3<T>> for &GMat3<T> {
+    type Output = GMat3<T>;
+    #[inline]
+    fn mul(self, rhs: &SymmetricGMat3<T>) -> GMat3<T> {
+        (*self).mul(*rhs)
     }
 }
 
@@ -998,42 +1427,35 @@ impl<'a, T: Real> Sum<&'a SymmetricGMat3<T>> for SymmetricGMat3<T> {
     }
 }
 
-impl<T: Real> Product<SymmetricGMat3<T>> for SymmetricGMat3<T> {
-    fn product<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        iter.fold(Self::IDENTITY, |a, b| a * b)
-    }
-}
-
-impl<'a, T: Real> Product<&'a SymmetricGMat3<T>> for SymmetricGMat3<T> {
-    fn product<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        iter.fold(Self::IDENTITY, |a, &b| a * b)
-    }
-}
-
-impl<T: Real> AsRef<[T; 9]> for SymmetricGMat3<T> {
+impl<T: Real> AsRef<[T; 6]> for SymmetricGMat3<T> {
     #[inline]
-    fn as_ref(&self) -> &[T; 9] {
-        unsafe { &*(self as *const SymmetricGMat3<T> as *const [T; 9]) }
+    fn as_ref(&self) -> &[T; 6] {
+        unsafe { &*(self as *const SymmetricGMat3<T> as *const [T; 6]) }
     }
 }
 
-impl<T: Real> AsMut<[T; 9]> for SymmetricGMat3<T> {
+impl<T: Real> AsMut<[T; 6]> for SymmetricGMat3<T> {
     #[inline]
-    fn as_mut(&mut self) -> &mut [T; 9] {
-        unsafe { &mut *(self as *mut SymmetricGMat3<T> as *mut [T; 9]) }
+    fn as_mut(&mut self) -> &mut [T; 6] {
+        unsafe { &mut *(self as *mut SymmetricGMat3<T> as *mut [T; 6]) }
+    }
+}
+
+impl<T: Real> From<SymmetricGMat3<T>> for GMat3<T> {
+    #[inline]
+    fn from(mat: SymmetricGMat3<T>) -> Self {
+        mat.to_mat3()
     }
 }
 
 impl<T: Real + core::fmt::Display> core::fmt::Display for SymmetricGMat3<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mat = self.to_mat3();
-        write!(f, "{}", mat)
+        if let Some(p) = f.precision() {
+            write!(f, "{:.*}", p, mat)
+        } else {
+            write!(f, "{}", mat)
+        }
     }
 }
 
