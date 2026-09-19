@@ -354,6 +354,24 @@ impl<T: Real> SymmetricGMat4<T> {
         Self::from_cols_upper(mat.x_axis, mat.y_axis, mat.z_axis, mat.w_axis)
     }
 
+    /// Creates a symmetric 4x4 matrix from the symmetric part `(M + Mᵀ) / 2` of a 4x4 matrix.
+    #[inline]
+    #[must_use]
+    pub fn from_mat4_symmetric_part(mat: GMat4<T>) -> Self {
+        Self::new(
+            mat.x_axis.x,
+            (mat.x_axis.y + mat.y_axis.x) * T::HALF,
+            (mat.x_axis.z + mat.z_axis.x) * T::HALF,
+            (mat.x_axis.w + mat.w_axis.x) * T::HALF,
+            mat.y_axis.y,
+            (mat.y_axis.z + mat.z_axis.y) * T::HALF,
+            (mat.y_axis.w + mat.w_axis.y) * T::HALF,
+            mat.z_axis.z,
+            (mat.z_axis.w + mat.w_axis.z) * T::HALF,
+            mat.w_axis.w,
+        )
+    }
+
     /// Creates a symmetric 4x4 matrix from the product `M * Mᵀ` of a 4x4 matrix.
     ///
     /// This is the Gram matrix of the rows of `mat`. For the Gram matrix of the columns,

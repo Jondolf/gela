@@ -213,6 +213,17 @@ impl<T: Real> SymmetricGMat2<T> {
         Self::from_cols_upper(mat.x_axis, mat.y_axis)
     }
 
+    /// Creates a symmetric 2x2 matrix from the symmetric part `(M + Mᵀ) / 2` of a 2x2 matrix.
+    #[inline]
+    #[must_use]
+    pub fn from_mat2_symmetric_part(mat: GMat2<T>) -> Self {
+        Self::new(
+            mat.x_axis.x,
+            (mat.x_axis.y + mat.y_axis.x) * T::HALF,
+            mat.y_axis.y,
+        )
+    }
+
     /// Creates a symmetric 2x2 matrix from the product `M * Mᵀ` of a 2x2 matrix.
     ///
     /// This is the Gram matrix of the rows of `mat`. For the Gram matrix of the columns,

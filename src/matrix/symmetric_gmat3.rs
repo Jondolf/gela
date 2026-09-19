@@ -258,6 +258,20 @@ impl<T: Real> SymmetricGMat3<T> {
         Self::from_cols_upper(mat.x_axis, mat.y_axis, mat.z_axis)
     }
 
+    /// Creates a symmetric 3x3 matrix from the symmetric part `(M + Mᵀ) / 2` of a 3x3 matrix.
+    #[inline]
+    #[must_use]
+    pub fn from_mat3_symmetric_part(mat: GMat3<T>) -> Self {
+        Self::new(
+            mat.x_axis.x,
+            (mat.x_axis.y + mat.y_axis.x) * T::HALF,
+            (mat.x_axis.z + mat.z_axis.x) * T::HALF,
+            mat.y_axis.y,
+            (mat.y_axis.z + mat.z_axis.y) * T::HALF,
+            mat.z_axis.z,
+        )
+    }
+
     /// Creates a symmetric 3x3 matrix from the product `M * Mᵀ` of a 3x3 matrix.
     ///
     /// This is the Gram matrix of the rows of `mat`. For the Gram matrix of the columns,
