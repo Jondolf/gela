@@ -505,7 +505,7 @@ impl<T: Real> GMat3<T> {
     /// Returns true if `self` is equal to its own transpose, within `max_abs_diff`.
     ///
     /// See [`SymmetricGMat3`](crate::matrix::SymmetricGMat3) for a matrix type that stores
-    /// only the six distinct elements of a symmetric matrix.
+    /// only the 6 distinct elements of a symmetric matrix.
     #[inline]
     #[must_use]
     pub fn is_symmetric(&self, max_abs_diff: T) -> T::Bool {

@@ -250,6 +250,16 @@ impl Mat2A {
         self.x_axis.x + self.y_axis.y
     }
 
+    /// Returns true if `self` is equal to its own transpose, within `max_abs_diff`.
+    ///
+    /// See [`SymmetricMat2`](crate::matrix::SymmetricMat2) for a matrix type that stores
+    /// only the 3 distinct elements of a symmetric matrix.
+    #[inline]
+    #[must_use]
+    pub fn is_symmetric(&self, max_abs_diff: f32) -> bool {
+        (self.x_axis.y - self.y_axis.x).abs() <= max_abs_diff
+    }
+
     /// Returns the determinant of `self`.
     #[inline]
     #[must_use]

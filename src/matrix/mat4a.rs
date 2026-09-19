@@ -690,6 +690,21 @@ impl Mat4A {
         self.x_axis.x + self.y_axis.y + self.z_axis.z + self.w_axis.w
     }
 
+    /// Returns true if `self` is equal to its own transpose, within `max_abs_diff`.
+    ///
+    /// See [`SymmetricMat4`](crate::matrix::SymmetricMat4) for a matrix type that stores
+    /// only the 10 distinct elements of a symmetric matrix.
+    #[inline]
+    #[must_use]
+    pub fn is_symmetric(&self, max_abs_diff: f32) -> bool {
+        ((self.x_axis.y - self.y_axis.x).abs() <= max_abs_diff)
+            & ((self.x_axis.z - self.z_axis.x).abs() <= max_abs_diff)
+            & ((self.x_axis.w - self.w_axis.x).abs() <= max_abs_diff)
+            & ((self.y_axis.z - self.z_axis.y).abs() <= max_abs_diff)
+            & ((self.y_axis.w - self.w_axis.y).abs() <= max_abs_diff)
+            & ((self.z_axis.w - self.w_axis.z).abs() <= max_abs_diff)
+    }
+
     /// Returns the determinant of `self`.
     #[must_use]
     pub fn determinant(&self) -> f32 {
