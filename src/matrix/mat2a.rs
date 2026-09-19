@@ -306,9 +306,11 @@ impl Mat2A {
         Self(self.0 * f32x4::splat(rhs))
     }
 
-    /// Multiply `self` by a scaling vector `scale`.
-    /// This is faster than creating a whole diagonal scaling matrix and then multiplying that.
-    /// This operation is commutative.
+    /// Multiplies `self` by a scaling vector `scale`.
+    ///
+    /// This is a faster equivalent to `self * Self::from_diagonal(scale)`.
+    ///
+    /// This operation is not commutative.
     #[inline]
     #[must_use]
     pub fn mul_diagonal_scale(&self, scale: GVec2<f32>) -> Self {

@@ -1147,10 +1147,11 @@ impl<T: Real> GMat4<T> {
         )
     }
 
-    /// Multiply `self` by a scaling vector `scale`.
+    /// Multiplies `self` by a scaling vector `scale`.
     ///
-    /// This is faster than creating a whole diagonal scaling matrix and then multiplying that.
-    /// This operation is commutative.
+    /// This is a faster equivalent to `self * Self::from_diagonal(scale)`.
+    ///
+    /// This operation is not commutative.
     #[inline]
     #[must_use]
     pub fn mul_diagonal_scale(&self, scale: GVec4<T>) -> Self {
