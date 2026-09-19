@@ -10,7 +10,10 @@ use crate::isometry::GIso3;
 use crate::{
     affine::{Affine2, Affine3, DAffine2, DAffine3},
     isometry::{DIso2, DIso3, Iso2, Iso3},
-    matrix::{DMat2, DMat3, DMat4, Mat2, Mat3, Mat4},
+    matrix::{
+        DMat2, DMat3, DMat4, Mat2, Mat3, Mat4, SymmetricDMat2, SymmetricDMat3, SymmetricDMat4,
+        SymmetricMat2, SymmetricMat3, SymmetricMat4,
+    },
     rotation::{DRot2, DRot3, Rot2, Rot3},
     vector::{DVec2, DVec3, DVec4, IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3, Vec4},
 };
@@ -127,6 +130,13 @@ impl_rkyv!(
     DMat3: [f64; 9],
     DMat4: [f64; 16],
 
+    SymmetricMat2: [f32; 3],
+    SymmetricMat3: [f32; 6],
+    SymmetricMat4: [f32; 10],
+    SymmetricDMat2: [f64; 3],
+    SymmetricDMat3: [f64; 6],
+    SymmetricDMat4: [f64; 10],
+
     Rot2: [f32; 2],
     Rot3: [f32; 4],
     DRot2: [f64; 2],
@@ -181,7 +191,7 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3},
         isometry::{Iso2, Iso3},
-        matrix::{Mat2, Mat3, Mat4},
+        matrix::{Mat2, Mat3, Mat4, SymmetricMat2, SymmetricMat3, SymmetricMat4},
         rotation::{Rot2, Rot3},
         vector::{IVec3, UVec2, Vec2, Vec3, Vec4},
     };
@@ -213,6 +223,14 @@ mod tests {
     test_rkyv!(mat2, Mat2, Mat2::from_cols_array(&[1.0, 2.0, 3.0, 4.0]));
     test_rkyv!(mat3, Mat3, Mat3::IDENTITY);
     test_rkyv!(mat4, Mat4, Mat4::IDENTITY);
+
+    test_rkyv!(
+        symmetric_mat2,
+        SymmetricMat2,
+        SymmetricMat2::from_array([1.0, 2.0, 3.0])
+    );
+    test_rkyv!(symmetric_mat3, SymmetricMat3, SymmetricMat3::IDENTITY);
+    test_rkyv!(symmetric_mat4, SymmetricMat4, SymmetricMat4::IDENTITY);
 
     test_rkyv!(rot2, Rot2, Rot2::IDENTITY);
     test_rkyv!(rot3, Rot3, Rot3::IDENTITY);

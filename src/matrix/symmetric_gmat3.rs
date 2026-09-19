@@ -10,6 +10,9 @@ use gnum::{
     simd::{MaskLike, Select},
 };
 
+#[cfg(feature = "zerocopy")]
+use zerocopy_derive::*;
+
 /// Creates a symmetric 3x3 matrix from its bottom left triangle, including diagonal elements.
 ///
 /// The elements are in column-major order `mCR`, where `C` is the column index
@@ -43,6 +46,7 @@ pub const fn symmetric_gmat3<T: Real>(
 /// However, the product of two symmetric matrices is *only* symmetric
 /// if the matrices are commutable, meaning that `AB == BA`.
 #[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, KnownLayout))]
 #[repr(C)]
 pub struct SymmetricGMat3<T: Real> {
     /// The first element of the first column.
