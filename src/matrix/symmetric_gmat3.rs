@@ -418,12 +418,7 @@ impl<T: Real> SymmetricGMat3<T> {
     #[inline]
     #[must_use]
     pub fn row(&self, index: usize) -> GVec3<T> {
-        match index {
-            0 => GVec3::new(self.m00, self.m01, self.m02),
-            1 => GVec3::new(self.m01, self.m11, self.m12),
-            2 => GVec3::new(self.m02, self.m12, self.m22),
-            _ => panic!("index out of bounds"),
-        }
+        self.col(index)
     }
 
     /// Returns the diagonal of `self`.

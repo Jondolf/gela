@@ -622,6 +622,21 @@ impl<T: Real> GMat4<T> {
         self.x_axis.x + self.y_axis.y + self.z_axis.z + self.w_axis.w
     }
 
+    /// Returns true if `self` is equal to its own transpose, within `max_abs_diff`.
+    ///
+    /// See [`SymmetricGMat4`](crate::matrix::SymmetricGMat4) for a matrix type that stores
+    /// only the 10 distinct elements of a symmetric matrix.
+    #[inline]
+    #[must_use]
+    pub fn is_symmetric(&self, max_abs_diff: T) -> T::Bool {
+        self.x_axis.y.sub(self.y_axis.x).abs().num_le(max_abs_diff)
+            & self.x_axis.z.sub(self.z_axis.x).abs().num_le(max_abs_diff)
+            & self.x_axis.w.sub(self.w_axis.x).abs().num_le(max_abs_diff)
+            & self.y_axis.z.sub(self.z_axis.y).abs().num_le(max_abs_diff)
+            & self.y_axis.w.sub(self.w_axis.y).abs().num_le(max_abs_diff)
+            & self.z_axis.w.sub(self.w_axis.z).abs().num_le(max_abs_diff)
+    }
+
     /// Returns the determinant of `self`.
     #[must_use]
     pub fn determinant(&self) -> T {
@@ -727,7 +742,7 @@ impl<T: Real> GMat4<T> {
 
         if CHECKED {
             let invertible = dot1.num_ne(T::ZERO);
-        (Self::select(invertible, inverted, Self::ZERO), invertible)
+            (Self::select(invertible, inverted, Self::ZERO), invertible)
         } else {
             (inverted, T::Bool::TRUE)
         }

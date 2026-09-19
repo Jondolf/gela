@@ -5,7 +5,8 @@
 //! `gela` provides the following types for linear algebra:
 //!
 //! - [Vectors](vector): [`GVec2`], [`GVec3`], [`GVec4`], [`Vec3A`], [`Vec4A`], [`BVec3A`], [`BVec4A`]
-//! - [Matrices](matrix): [`GMat2`], [`GMat3`], [`GMat4`], [`Mat2A`], [`Mat3A`], [`Mat4A`]
+//! - [Square matrices](matrix): [`GMat2`], [`GMat3`], [`GMat4`], [`Mat2A`], [`Mat3A`], [`Mat4A`],
+//!   [`SymmetricGMat2`], [`SymmetricGMat3`], [`SymmetricGMat4`]
 //! - [Rotations](rotation): [`GRot2`], [`GRot3`], [`Rot3A`]
 //! - [Isometries](isometry): [`GIso2`], [`GIso3`], [`Iso3A`]
 //! - [Affine transformations](affine): [`GAffine2`], [`GAffine3`], [`Affine2A`], [`Affine3A`]

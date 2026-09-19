@@ -12,6 +12,7 @@ Generic linear algebra for games and graphics.
 - Generic element types using [`gnum`]
 - Vectors: `GVec2`, `GVec3`, and `GVec4` (real numbers, integers, booleans)
 - Square matrices: `GMat2`, `GMat3`, `GMat4` (real numbers)
+- Symmetric matrices: `SymmetricGMat2`, `SymmetricGMat3`, `SymmetricGMat4` (real numbers)
 - Rotations: `GRot2`, `GRot3` (real numbers)
 - Isometries: `GIso2`, `GIso3` (real numbers)
 - Affine transformations: `GAffine2`, `GAffine3` (real numbers)
