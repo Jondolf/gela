@@ -2691,7 +2691,11 @@ impl<T: Copy> AsMut<[T; 4]> for GVec4<T> {
 
 impl<T: Copy + core::fmt::Display> core::fmt::Display for GVec4<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "[{}, {}, {}, {}]", self.x, self.y, self.z, self.w)
+        if let Some(p) = f.precision() {
+            write!(f, "[{:.*}, {:.*}, {:.*}, {:.*}]", p, self.x, p, self.y, p, self.z, p, self.w)
+        } else {
+            write!(f, "[{}, {}, {}, {}]", self.x, self.y, self.z, self.w)
+        }
     }
 }
 
