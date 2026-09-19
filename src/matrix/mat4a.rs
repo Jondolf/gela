@@ -681,6 +681,15 @@ impl Mat4A {
         GVec4::new(self.x_axis.x, self.y_axis.y, self.z_axis.z, self.w_axis.w)
     }
 
+    /// Returns the trace of `self`, the sum of the diagonal elements.
+    ///
+    /// This is also the sum of the eigenvalues of `self`.
+    #[inline]
+    #[must_use]
+    pub fn trace(&self) -> f32 {
+        self.x_axis.x + self.y_axis.y + self.z_axis.z + self.w_axis.w
+    }
+
     /// Returns the determinant of `self`.
     #[must_use]
     pub fn determinant(&self) -> f32 {

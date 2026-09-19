@@ -493,6 +493,15 @@ impl<T: Real> GMat3<T> {
         GVec3::new(self.x_axis.x, self.y_axis.y, self.z_axis.z)
     }
 
+    /// Returns the trace of `self`, the sum of the diagonal elements.
+    ///
+    /// This is also the sum of the eigenvalues of `self`.
+    #[inline]
+    #[must_use]
+    pub fn trace(&self) -> T {
+        self.x_axis.x + self.y_axis.y + self.z_axis.z
+    }
+
     /// Returns the determinant of `self`.
     #[inline]
     #[must_use]
