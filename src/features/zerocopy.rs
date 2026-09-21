@@ -7,7 +7,7 @@ use crate::{
     UnpaddedElement,
     affine::{GAffine2, GAffine3},
     isometry::GIso2,
-    matrix::{GMat2, GMat3, GMat4},
+    matrix::{GMat2, GMat3, GMat4, SymmetricGMat2, SymmetricGMat3, SymmetricGMat4},
     rotation::{GRot2, GRot3},
     vector::{GVec2, GVec3, GVec4},
 };
@@ -35,6 +35,9 @@ impl_into_bytes!(
     GVec3<T: Copy>,
     GMat3<T: Real>,
     GAffine3<T: Real>,
+    SymmetricGMat2<T: Real>,
+    SymmetricGMat3<T: Real>,
+    SymmetricGMat4<T: Real>,
 );
 
 // These types have a minimum alignment of 16 bytes, which only avoids padding
@@ -73,7 +76,10 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3, DAffine2, DAffine3},
         isometry::{DIso2, DIso3, Iso2, Iso3},
-        matrix::{DMat2, DMat3, DMat4, Mat2, Mat3, Mat4},
+        matrix::{
+            DMat2, DMat3, DMat4, Mat2, Mat3, Mat4, SymmetricDMat2, SymmetricDMat3, SymmetricDMat4,
+            SymmetricMat2, SymmetricMat3, SymmetricMat4,
+        },
         rotation::{DRot2, DRot3, Rot2, Rot3},
         vector::{DVec2, DVec3, DVec4, IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3, Vec4},
     };
@@ -127,6 +133,13 @@ mod tests {
     test_round_trip!(dmat2, DMat2);
     test_round_trip!(dmat3, DMat3);
     test_round_trip!(dmat4, DMat4);
+
+    test_round_trip!(symmetric_mat2, SymmetricMat2);
+    test_round_trip!(symmetric_mat3, SymmetricMat3);
+    test_round_trip!(symmetric_mat4, SymmetricMat4);
+    test_round_trip!(symmetric_dmat2, SymmetricDMat2);
+    test_round_trip!(symmetric_dmat3, SymmetricDMat3);
+    test_round_trip!(symmetric_dmat4, SymmetricDMat4);
 
     test_round_trip!(rot2, Rot2);
     test_round_trip!(rot3, Rot3);

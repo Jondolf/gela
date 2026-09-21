@@ -12,7 +12,7 @@ use crate::{
 use crate::{
     affine::{GAffine2, GAffine3},
     isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
+    matrix::{GMat2, GMat3, GMat4, SymmetricGMat2, SymmetricGMat3, SymmetricGMat4},
     rotation::{GRot2, GRot3},
     vector::{GVec2, GVec3, GVec4},
 };
@@ -58,6 +58,10 @@ impl_arbitrary!(GVec4<T: Copy>, 4, |a| GVec4::from_array(a));
 impl_arbitrary!(GMat2<T: Real>, 4, |a| GMat2::from_cols_array(&a));
 impl_arbitrary!(GMat3<T: Real>, 9, |a| GMat3::from_cols_array(&a));
 impl_arbitrary!(GMat4<T: Real>, 16, |a| GMat4::from_cols_array(&a));
+
+impl_arbitrary!(SymmetricGMat2<T: Real>, 3, |a| SymmetricGMat2::from_array(a));
+impl_arbitrary!(SymmetricGMat3<T: Real>, 6, |a| SymmetricGMat3::from_array(a));
+impl_arbitrary!(SymmetricGMat4<T: Real>, 10, |a| SymmetricGMat4::from_array(a));
 
 impl_arbitrary!(GRot2<T: Real>, 2, |a| GRot2::from_array(a));
 impl_arbitrary!(GRot3<T: Real>, 4, |a| GRot3::from_array(a));
@@ -107,7 +111,7 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3},
         isometry::{Iso2, Iso3},
-        matrix::{Mat2, Mat3, Mat4},
+        matrix::{Mat2, Mat3, Mat4, SymmetricMat2, SymmetricMat3, SymmetricMat4},
         rotation::{Rot2, Rot3},
         vector::{IVec3, Vec2, Vec3, Vec4},
     };
@@ -151,6 +155,16 @@ mod tests {
         Mat4::from_cols_array(&[
             1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0
         ])
+    );
+
+    test_arbitrary!(symmetric_mat2, SymmetricMat2::from_array([1.0, 2.0, 3.0]));
+    test_arbitrary!(
+        symmetric_mat3,
+        SymmetricMat3::from_array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    );
+    test_arbitrary!(
+        symmetric_mat4,
+        SymmetricMat4::from_array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
     );
 
     test_arbitrary!(rot2, Rot2::from_array([1.0, 2.0]));

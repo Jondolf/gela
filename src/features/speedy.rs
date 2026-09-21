@@ -12,7 +12,7 @@ use crate::{
 use crate::{
     affine::{GAffine2, GAffine3},
     isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
+    matrix::{GMat2, GMat3, GMat4, SymmetricGMat2, SymmetricGMat3, SymmetricGMat4},
     rotation::{GRot2, GRot3},
     vector::{GVec2, GVec3, GVec4},
 };
@@ -126,6 +126,10 @@ impl_speedy!(GMat2<T: Real>, 4, |m| m.to_cols_array(), |a| GMat2::from_cols_arra
 impl_speedy!(GMat3<T: Real>, 9, |m| m.to_cols_array(), |a| GMat3::from_cols_array(&a));
 impl_speedy!(GMat4<T: Real>, 16, |m| m.to_cols_array(), |a| GMat4::from_cols_array(&a));
 
+impl_speedy!(SymmetricGMat2<T: Real>, 3, |m| m.to_array(), |a| SymmetricGMat2::from_array(a));
+impl_speedy!(SymmetricGMat3<T: Real>, 6, |m| m.to_array(), |a| SymmetricGMat3::from_array(a));
+impl_speedy!(SymmetricGMat4<T: Real>, 10, |m| m.to_array(), |a| SymmetricGMat4::from_array(a));
+
 impl_speedy!(GRot2<T: Real>, 2, |r| r.to_array(), |a| GRot2::from_array(a));
 impl_speedy!(GRot3<T: Real>, 4, |r| r.to_array(), |a| GRot3::from_array(a));
 
@@ -212,7 +216,7 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3},
         isometry::{Iso2, Iso3},
-        matrix::{Mat2, Mat3, Mat4},
+        matrix::{Mat2, Mat3, Mat4, SymmetricMat2, SymmetricMat3, SymmetricMat4},
         rotation::{Rot2, Rot3},
         vector::{IVec3, Vec2, Vec3, Vec4},
     };
@@ -248,6 +252,10 @@ mod tests {
     test_speedy!(mat2, Mat2, Mat2::from_cols_array(&[1.0, 2.0, 3.0, 4.0]), 16);
     test_speedy!(mat3, Mat3, Mat3::IDENTITY, 36);
     test_speedy!(mat4, Mat4, Mat4::IDENTITY, 64);
+
+    test_speedy!(symmetric_mat2, SymmetricMat2, SymmetricMat2::IDENTITY, 12);
+    test_speedy!(symmetric_mat3, SymmetricMat3, SymmetricMat3::IDENTITY, 24);
+    test_speedy!(symmetric_mat4, SymmetricMat4, SymmetricMat4::IDENTITY, 40);
 
     test_speedy!(rot2, Rot2, Rot2::IDENTITY, 8);
     test_speedy!(rot3, Rot3, Rot3::IDENTITY, 16);

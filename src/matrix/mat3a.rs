@@ -406,6 +406,27 @@ impl Mat3A {
         GVec3::new(self.x_axis.x, self.y_axis.y, self.z_axis.z)
     }
 
+    /// Returns the trace of `self`, the sum of the diagonal elements.
+    ///
+    /// This is also the sum of the eigenvalues of `self`.
+    #[inline]
+    #[must_use]
+    pub fn trace(&self) -> f32 {
+        self.x_axis.x + self.y_axis.y + self.z_axis.z
+    }
+
+    /// Returns true if `self` is equal to its own transpose, within `max_abs_diff`.
+    ///
+    /// See [`SymmetricMat3`](crate::matrix::SymmetricMat3) for a matrix type that stores
+    /// only the 6 distinct elements of a symmetric matrix.
+    #[inline]
+    #[must_use]
+    pub fn is_symmetric(&self, max_abs_diff: f32) -> bool {
+        ((self.x_axis.y - self.y_axis.x).abs() <= max_abs_diff)
+            & ((self.x_axis.z - self.z_axis.x).abs() <= max_abs_diff)
+            & ((self.y_axis.z - self.z_axis.y).abs() <= max_abs_diff)
+    }
+
     /// Returns the determinant of `self`.
     #[inline]
     #[must_use]
@@ -553,9 +574,11 @@ impl Mat3A {
         Self::from_cols(self.x_axis * rhs, self.y_axis * rhs, self.z_axis * rhs)
     }
 
-    /// Multiply `self` by a scaling vector `scale`.
-    /// This is faster than creating a whole diagonal scaling matrix and then multiplying that.
-    /// This operation is commutative.
+    /// Multiplies `self` by a scaling vector `scale`.
+    ///
+    /// This is a faster equivalent to `self * Self::from_diagonal(scale)`.
+    ///
+    /// This operation is not commutative.
     #[inline]
     #[must_use]
     pub fn mul_diagonal_scale(&self, scale: GVec3<f32>) -> Self {

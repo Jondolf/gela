@@ -18,7 +18,7 @@ use crate::{
 use crate::{
     affine::{GAffine2, GAffine3},
     isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
+    matrix::{GMat2, GMat3, GMat4, SymmetricGMat2, SymmetricGMat3, SymmetricGMat4},
     rotation::{EulerRot, GRot2, GRot3},
     vector::{GVec2, GVec3, GVec4},
 };
@@ -147,6 +147,10 @@ impl_serde!(GVec4<T: Copy>, 4, |v| v.to_array(), |a| GVec4::from_array(a));
 impl_serde!(GMat2<T: Real>, 4, |m| m.to_cols_array(), |a| GMat2::from_cols_array(&a));
 impl_serde!(GMat3<T: Real>, 9, |m| m.to_cols_array(), |a| GMat3::from_cols_array(&a));
 impl_serde!(GMat4<T: Real>, 16, |m| m.to_cols_array(), |a| GMat4::from_cols_array(&a));
+
+impl_serde!(SymmetricGMat2<T: Real>, 3, |m| m.to_array(), |a| SymmetricGMat2::from_array(a));
+impl_serde!(SymmetricGMat3<T: Real>, 6, |m| m.to_array(), |a| SymmetricGMat3::from_array(a));
+impl_serde!(SymmetricGMat4<T: Real>, 10, |m| m.to_array(), |a| SymmetricGMat4::from_array(a));
 
 impl_serde!(GRot2<T: Real>, 2, |r| r.to_array(), |a| GRot2::from_array(a));
 impl_serde!(GRot3<T: Real>, 4, |r| r.to_array(), |a| GRot3::from_array(a));
@@ -342,7 +346,7 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3},
         isometry::{Iso2, Iso3},
-        matrix::{Mat2, Mat3, Mat4},
+        matrix::{Mat2, Mat3, Mat4, SymmetricMat2, SymmetricMat3, SymmetricMat4},
         rotation::{Rot2, Rot3},
         vector::{IVec3, Vec2, Vec3, Vec4},
     };
@@ -382,6 +386,22 @@ mod tests {
         mat4,
         Mat4::IDENTITY,
         "[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]"
+    );
+
+    test_serde!(
+        symmetric_mat2,
+        SymmetricMat2::from_array([1.0, 2.0, 3.0]),
+        "[1.0,2.0,3.0]"
+    );
+    test_serde!(
+        symmetric_mat3,
+        SymmetricMat3::from_array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]),
+        "[1.0,2.0,3.0,4.0,5.0,6.0]"
+    );
+    test_serde!(
+        symmetric_mat4,
+        SymmetricMat4::IDENTITY,
+        "[1.0,0.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0,1.0]"
     );
 
     test_serde!(rot2, Rot2::IDENTITY, "[1.0,0.0]");
