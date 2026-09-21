@@ -1,5 +1,5 @@
 use crate::affine::GAffine3;
-use crate::matrix::{GMat3, GMat4, Mat3A};
+use crate::matrix::{GMat3, GMat4, Mat3A, Mat4A};
 use crate::rotation::GRot3;
 use crate::vector::{GVec3, Vec3A};
 
@@ -423,6 +423,18 @@ impl From<Affine3A> for GMat4<f32> {
     #[inline]
     fn from(affine: Affine3A) -> Self {
         GMat4::from(affine.to_affine3())
+    }
+}
+
+impl From<Affine3A> for Mat4A {
+    #[inline]
+    fn from(affine: Affine3A) -> Self {
+        Self::from_cols(
+            affine.matrix3.x_axis.extend(0.0).into(),
+            affine.matrix3.y_axis.extend(0.0).into(),
+            affine.matrix3.z_axis.extend(0.0).into(),
+            affine.translation.extend(1.0).into(),
+        )
     }
 }
 
