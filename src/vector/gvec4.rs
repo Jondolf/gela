@@ -10,7 +10,7 @@ use core::{
 use gnum::{
     cmp::{NumEq, NumOrd},
     num::{Float, Int, Num, NumCast, Real, Signed, ops::*},
-    simd::{MaskLike, Select, SimdLike},
+    simd::{MaskLike, Select, SelectIndex, SimdLike},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -247,6 +247,35 @@ impl<T: Copy> GVec4<T> {
     pub const fn with_w(mut self, w: T) -> Self {
         self.w = w;
         self
+    }
+}
+
+impl<T: Num + SelectIndex> GVec4<T> {
+    /// Creates a vector by choosing one of `values` for each lane, using the corresponding
+    /// lane of `index`, or `fallback` for indices outside of `0..N`.
+    #[inline]
+    #[must_use]
+    pub fn select_index_or<const N: usize>(
+        index: T::Index,
+        values: [Self; N],
+        fallback: Self,
+    ) -> Self {
+        let mut x = [fallback.x; N];
+        let mut y = [fallback.y; N];
+        let mut z = [fallback.z; N];
+        let mut w = [fallback.w; N];
+        for (i, value) in values.into_iter().enumerate() {
+            x[i] = value.x;
+            y[i] = value.y;
+            z[i] = value.z;
+            w[i] = value.w;
+        }
+        Self {
+            x: T::select_index_or(index, x, fallback.x),
+            y: T::select_index_or(index, y, fallback.y),
+            z: T::select_index_or(index, z, fallback.z),
+            w: T::select_index_or(index, w, fallback.w),
+        }
     }
 }
 
