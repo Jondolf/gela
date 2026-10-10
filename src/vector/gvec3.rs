@@ -12,7 +12,7 @@ use gnum::num::ScalarFloat;
 use gnum::{
     cmp::{NumEq, NumOrd},
     num::{Float, Int, Num, NumCast, Real, Signed, ops::*},
-    simd::{MaskLike, Select, SimdLike},
+    simd::{MaskLike, Select, SelectIndex, SimdLike},
 };
 
 #[cfg(feature = "zerocopy")]
@@ -248,6 +248,32 @@ impl<T: Num> GVec3<T> {
     #[must_use]
     pub fn to_homogeneous(self) -> GVec4<T> {
         self.extend(T::ONE)
+    }
+}
+
+impl<T: Num + SelectIndex> GVec3<T> {
+    /// Creates a vector by choosing one of `values` for each lane, using the corresponding
+    /// lane of `index`, or `fallback` for indices outside of `0..N`.
+    #[inline]
+    #[must_use]
+    pub fn select_index_or<const N: usize>(
+        index: T::Index,
+        values: [Self; N],
+        fallback: Self,
+    ) -> Self {
+        let mut x = [fallback.x; N];
+        let mut y = [fallback.y; N];
+        let mut z = [fallback.z; N];
+        for (i, value) in values.into_iter().enumerate() {
+            x[i] = value.x;
+            y[i] = value.y;
+            z[i] = value.z;
+        }
+        Self {
+            x: T::select_index_or(index, x, fallback.x),
+            y: T::select_index_or(index, y, fallback.y),
+            z: T::select_index_or(index, z, fallback.z),
+        }
     }
 }
 

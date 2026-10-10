@@ -1,3 +1,4 @@
+use crate::affine::GAffine3;
 #[cfg(feature = "simd")]
 use crate::isometry::Iso3A;
 use crate::rotation::GRot3;
@@ -254,6 +255,13 @@ impl<T: Real> Default for GIso3<T> {
     #[inline]
     fn default() -> Self {
         Self::IDENTITY
+    }
+}
+
+impl<T: Real> From<GIso3<T>> for GAffine3<T> {
+    #[inline]
+    fn from(isometry: GIso3<T>) -> Self {
+        Self::from_rotation_translation(isometry.rotation, isometry.translation)
     }
 }
 

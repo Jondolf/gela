@@ -1,3 +1,4 @@
+use crate::affine::GAffine2;
 use crate::rotation::GRot2;
 use crate::vector::GVec2;
 
@@ -232,6 +233,13 @@ impl<T: Real> Default for GIso2<T> {
     #[inline]
     fn default() -> Self {
         Self::IDENTITY
+    }
+}
+
+impl<T: Real> From<GIso2<T>> for GAffine2<T> {
+    #[inline]
+    fn from(isometry: GIso2<T>) -> Self {
+        Self::from_rotation_translation(isometry.rotation, isometry.translation)
     }
 }
 

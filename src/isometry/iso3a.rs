@@ -1,4 +1,6 @@
+use crate::affine::Affine3A;
 use crate::isometry::GIso3;
+use crate::matrix::Mat3A;
 use crate::rotation::Rot3A;
 use crate::vector::{GVec3, Vec3A};
 
@@ -216,6 +218,16 @@ impl From<Iso3A> for GIso3<f32> {
     #[inline(always)]
     fn from(i: Iso3A) -> Self {
         i.to_iso3()
+    }
+}
+
+impl From<Iso3A> for Affine3A {
+    #[inline]
+    fn from(isometry: Iso3A) -> Self {
+        Self {
+            matrix3: Mat3A::from_rotation(isometry.rotation.into()),
+            translation: isometry.translation,
+        }
     }
 }
 
