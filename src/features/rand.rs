@@ -18,7 +18,7 @@ use crate::{
 use crate::{
     affine::{GAffine2, GAffine3},
     isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
+    matrix::{GMat2, GMat3, GMat4, SymmetricGMat2, SymmetricGMat3, SymmetricGMat4},
     rotation::{GRot2, GRot3},
     vector::{GVec2, GVec3, GVec4},
 };
@@ -65,6 +65,10 @@ impl_standard_uniform!(GVec4<T: Copy>, 4, |a| GVec4::from_array(a));
 impl_standard_uniform!(GMat2<T: Real>, 4, |a| GMat2::from_cols_array(&a));
 impl_standard_uniform!(GMat3<T: Real>, 9, |a| GMat3::from_cols_array(&a));
 impl_standard_uniform!(GMat4<T: Real>, 16, |a| GMat4::from_cols_array(&a));
+
+impl_standard_uniform!(SymmetricGMat2<T: Real>, 3, |a| SymmetricGMat2::from_array(a));
+impl_standard_uniform!(SymmetricGMat3<T: Real>, 6, |a| SymmetricGMat3::from_array(a));
+impl_standard_uniform!(SymmetricGMat4<T: Real>, 10, |a| SymmetricGMat4::from_array(a));
 
 impl_standard_uniform!(GAffine2<T: Real>, 6, |a| GAffine2::from_cols_array(&a));
 impl_standard_uniform!(GAffine3<T: Real>, 12, |a| GAffine3::from_cols_array(&a));
@@ -297,7 +301,7 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3},
         isometry::{Iso2, Iso3},
-        matrix::{DMat3, Mat2, Mat3, Mat4},
+        matrix::{DMat3, Mat2, Mat3, Mat4, SymmetricMat2, SymmetricMat3, SymmetricMat4},
         rotation::{DRot3, Rot2, Rot3},
         vector::{DVec2, IVec3, UVec2, Vec2, Vec3, Vec4},
     };
@@ -343,6 +347,10 @@ mod tests {
     test_standard_uniform!(mat3, Mat3);
     test_standard_uniform!(mat4, Mat4);
     test_standard_uniform!(dmat3, DMat3);
+
+    test_standard_uniform!(symmetric_mat2, SymmetricMat2);
+    test_standard_uniform!(symmetric_mat3, SymmetricMat3);
+    test_standard_uniform!(symmetric_mat4, SymmetricMat4);
 
     test_standard_uniform!(rot2, Rot2, non_deterministic_math);
     test_standard_uniform!(rot3, Rot3, non_deterministic_math);

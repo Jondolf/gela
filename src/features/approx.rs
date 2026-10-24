@@ -12,7 +12,7 @@ use crate::{
 use crate::{
     affine::{GAffine2, GAffine3},
     isometry::{GIso2, GIso3},
-    matrix::{GMat2, GMat3, GMat4},
+    matrix::{GMat2, GMat3, GMat4, SymmetricGMat2, SymmetricGMat3, SymmetricGMat4},
     rotation::{GRot2, GRot3},
     vector::{GVec2, GVec3, GVec4},
 };
@@ -161,6 +161,10 @@ impl_approx!(GMat2<T: Real>, 4, |m| m.to_cols_array());
 impl_approx!(GMat3<T: Real>, 9, |m| m.to_cols_array());
 impl_approx!(GMat4<T: Real>, 16, |m| m.to_cols_array());
 
+impl_approx!(SymmetricGMat2<T: Real>, 3, |m| m.to_array());
+impl_approx!(SymmetricGMat3<T: Real>, 6, |m| m.to_array());
+impl_approx!(SymmetricGMat4<T: Real>, 10, |m| m.to_array());
+
 impl_approx!(GRot2<T: Real>, 2, |r| r.to_array());
 impl_approx!(GRot3<T: Real>, 4, |r| r.to_array());
 
@@ -208,7 +212,7 @@ mod tests {
     use crate::{
         affine::{Affine2, Affine3},
         isometry::{Iso2, Iso3},
-        matrix::{DMat3, Mat2, Mat3, Mat4},
+        matrix::{DMat3, Mat2, Mat3, Mat4, SymmetricMat2, SymmetricMat3, SymmetricMat4},
         rotation::{Rot2, Rot3},
         vector::{DVec2, Vec2, Vec3, Vec4},
     };
@@ -265,6 +269,28 @@ mod tests {
         DMat3::IDENTITY,
         DMat3::from_cols_array(&[1.0; 9]),
         1e-17
+    );
+
+    test_approx!(
+        symmetric_mat2,
+        SymmetricMat2,
+        SymmetricMat2::IDENTITY,
+        SymmetricMat2::from_array([1.0; 3]),
+        1e-8
+    );
+    test_approx!(
+        symmetric_mat3,
+        SymmetricMat3,
+        SymmetricMat3::IDENTITY,
+        SymmetricMat3::from_array([1.0; 6]),
+        1e-8
+    );
+    test_approx!(
+        symmetric_mat4,
+        SymmetricMat4,
+        SymmetricMat4::IDENTITY,
+        SymmetricMat4::from_array([1.0; 10]),
+        1e-8
     );
 
     #[test]
