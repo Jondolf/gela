@@ -44,7 +44,7 @@ pub const fn symmetric_gmat4<T: Real>(
 ///
 /// - The matrix is equal to its transpose.
 /// - The matrix has real eigenvalues.
-/// - The eigenvectors corresponding to the eigenvalues are orthogonal.
+/// - The eigenvectors corresponding to distinct eigenvalues are orthogonal.
 /// - The matrix is always diagonalizable.
 ///
 /// The sum and difference of two symmetric matrices is always symmetric.
@@ -751,7 +751,7 @@ impl<T: Real> SymmetricGMat4<T> {
 
     /// Evaluates the quadratic form of `self` at `v`, returning `vᵀ * self * v`.
     ///
-    /// In physics simulations, for an inverse mass matrix,
+    /// In physics simulations, for a mass matrix,
     /// this is the effective mass along a single axis.
     #[doc(alias = "vector_sandwich")]
     #[inline]

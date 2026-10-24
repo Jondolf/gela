@@ -39,7 +39,7 @@ pub const fn symmetric_gmat3<T: Real>(
 ///
 /// - The matrix is equal to its transpose.
 /// - The matrix has real eigenvalues.
-/// - The eigenvectors corresponding to the eigenvalues are orthogonal.
+/// - The eigenvectors corresponding to distinct eigenvalues are orthogonal.
 /// - The matrix is always diagonalizable.
 ///
 /// The sum and difference of two symmetric matrices is always symmetric.
@@ -621,7 +621,7 @@ impl<T: Real> SymmetricGMat3<T> {
 
     /// Evaluates the quadratic form of `self` at `v`, returning `vᵀ * self * v`.
     ///
-    /// In physics simulations, for an inverse inertia tensor,
+    /// In physics simulations, for an inertia tensor,
     /// this is the effective mass along a single axis.
     #[doc(alias = "vector_sandwich")]
     #[inline]
